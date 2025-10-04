@@ -1,14 +1,11 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 import streamlit as st
 from .colors import PALETTE_OPTIONS, PALETTES
 
 def _palette_values(name: str) -> dict:
-    """Retorna o dicionário de cores da paleta escolhida"""
     return PALETTES.get(name, PALETTES[PALETTE_OPTIONS[0]])
 
 def apply_base_theme() -> None:
-    """Aplica sempre o tema claro"""
     css = """
     <style>
     :root { --bg: #ffffff; --bg2:#F3F5FA; --text:#262730; }
@@ -20,7 +17,6 @@ def apply_base_theme() -> None:
     st.markdown(css, unsafe_allow_html=True)
 
 def apply_palette_css(palette_name: str) -> None:
-    """Aplica o CSS da paleta de cores escolhida"""
     p = _palette_values(palette_name)
     css = f"""
     <style>
@@ -50,10 +46,45 @@ def apply_palette_css(palette_name: str) -> None:
       }}
       .kpi .kpi-value {{ font-size: 1.8rem; font-weight: 800; line-height: 1; }}
       .kpi .kpi-label {{ opacity: .95; font-size: .95rem; }}
+
+      /* Label dos widgets (texto acima do controle) */
+      div[data-testid="stWidgetLabel"] p {{
+        font-size: 28px !important;         
+        font-weight: 800 !important;
+        color: #333 !important;
+        margin-bottom: 6px !important;
+      }}
+
+      div[data-baseweb="select"] > div {{
+        min-height: 60px !important;         
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+      }}
+      div[data-baseweb="select"] * {{
+        font-size: 20px !important;         
+      }}
+      span[data-baseweb="tag"] {{
+        transform: scale(1.05);          
+      }}
+
+      div[role="radiogroup"] label {{
+        font-size: 26px !important;         
+        font-weight: 700 !important;
+        padding: 6px 10px !important;
+        margin-right: 14px !important;
+      }}
+
+      .stTabs [role="tab"] {{
+        font-size: 30px !important;          
+        font-weight: 800 !important;
+        padding: 8px 16px !important;
+      }}
+      .stTabs [role="tab"][aria-selected="true"] {{
+        border-bottom: 6px solid currentColor !important;
+      }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
 
 def color_sequence(palette_name: str) -> list[str]:
-    """Retorna a sequência de cores da paleta para gráficos"""
     return _palette_values(palette_name)["seq"]

@@ -13,18 +13,18 @@ from core.theme import apply_base_theme, apply_palette_css, color_sequence
 MODELS_DIR = "/home/usuario/Área de trabalho/Dados/models"
 sys.path.append(MODELS_DIR)
 try:
-    from category import CATEGORY_CANONICAL_ORDER
+    from category import CATEGORY_CANONICAL_ORDER 
 except Exception:
     CATEGORY_CANONICAL_ORDER = []
 try:
-    from ingredient import INGREDIENTES_VALIDOS
+    from benefit import BENEFICIOS_VALIDOS  
 except Exception:
-    INGREDIENTES_VALIDOS = []
+    BENEFICIOS_VALIDOS = []
 
-st.set_page_config(page_title="Skincare • Ingredientes Ativos", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Skincare • Benefícios", page_icon="✨", layout="wide")
 
-TITLE_TEXT           = "Ingredientes por Marca e Categoria"
-TAGLINE_TEXT         = "Explore os ingredientes ativos mais usados pelas marcas e compare a diversidade de formulações."
+TITLE_TEXT           = "Benefícios por Marca e Categoria"
+TAGLINE_TEXT         = "Veja os benefícios mais presentes, compare marcas e descubra diferenciais por categoria."
 TITLE_SIZE           = 60
 TAGLINE_SIZE         = 26
 
@@ -41,7 +41,7 @@ BAR_TEXT_SIZE        = 18
 WIDGET_HEIGHT_PX     = 48
 
 if "palette_name" not in st.session_state:
-    st.session_state["palette_name"] = "Solaris"  
+    st.session_state["palette_name"] = "Solaris"
 
 apply_base_theme()
 apply_palette_css(st.session_state["palette_name"])
@@ -54,10 +54,8 @@ def panel_bg(): return "#ffffff"
 
 st.markdown(f"""
 <style>
-/* Títulos */
 .section-title {{ font-size:{SECTION_TITLE_SIZE}px; font-weight:700; color:{text_color()}; margin: 1rem 0 .5rem 0; }}
 .subtle       {{ font-size:{TAGLINE_SIZE}px; color:{subtext_color()}; }}
-/* Altura de inputs */
 .stSelectbox div[role="combobox"],
 .stMultiSelect div[role="combobox"],
 .stTextInput input, .stTextInput textarea {{
@@ -65,20 +63,20 @@ st.markdown(f"""
     height: {WIDGET_HEIGHT_PX}px !important;
     font-size: 18px !important;
 }}
-/* Select ocupa 100% */
 div[data-baseweb="select"] {{ width: 100% !important; }}
-/* DataFrame estilizado */
 [data-testid="stDataFrame"] thead tr th {{
     background: linear-gradient(90deg, {accent(0)}22, {accent(1)}22) !important;
     color: {text_color()} !important;
     font-weight: 800 !important;
     font-size: 16px !important;
 }}
-[data-testid="stDataFrame"] tbody td {{
-    font-size: 16px !important;
-}}
+[data-testid="stDataFrame"] tbody td {{ font-size: 16px !important; }}
 </style>
 """, unsafe_allow_html=True)
+
+def collapsed_label(lbl: str) -> dict:
+    """Mantém label acessível e esconde visualmente (sem warnings)."""
+    return {"label": lbl, "label_visibility": "collapsed"}
 
 def _pretty_from_source(fname: str) -> str:
     stem = Path(fname).stem
@@ -91,16 +89,16 @@ def split_semicolon(s: str) -> List[str]:
         return []
     return [p.strip() for p in s.split(";") if p.strip()]
 
-def explode_ingredients(df_in: pd.DataFrame) -> pd.DataFrame:
-    """Explode de ingredientes; se houver lista oficial, filtra por ela."""
+def explode_benefits(df_in: pd.DataFrame) -> pd.DataFrame:
+    """Explode de benefícios; se houver lista oficial, filtra por ela."""
     rows = []
-    valid = set(INGREDIENTES_VALIDOS) if INGREDIENTES_VALIDOS else None
+    valid = set(BENEFICIOS_VALIDOS) if BENEFICIOS_VALIDOS else None
     for _, r in df_in.iterrows():
-        for ing in split_semicolon(r.get("ingredientes", "")):
-            if valid is not None and ing not in valid:
+        for ben in split_semicolon(r.get("beneficios", "")):
+            if valid is not None and ben not in valid:
                 continue
             rows.append({
-                "ingrediente": ing,
+                "beneficio": ben,
                 "produto": r.get("nome"),
                 "marca": r.get("marca"),
                 "categoria": r.get("categoria"),
@@ -118,17 +116,29 @@ def pct_str(value: float, total: float) -> str:
     except Exception:
         return "—"
 
+def brl(x):
+    if x is None or pd.isna(x): return "—"
+    return f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+def fmt_qtd(v, u):
+    if pd.isna(v): return "—"
+    try:
+        v = float(v)
+        vtxt = f"{int(v)}" if v.is_integer() else f"{v:.0f}" if v >= 100 else f"{v:.2f}"
+    except Exception:
+        vtxt = str(v)
+    return f"{vtxt}{(' ' + u) if isinstance(u, str) and u else ''}"
+
+#  Dados 
 df = load_data()
 
-# Marca por arquivo-fonte 
 uses_files = "_source_file" in df.columns and df["_source_file"].notna().any()
 if uses_files:
     files = sorted(df["_source_file"].dropna().unique().tolist())
-    LABEL_MAP = { _pretty_from_source(f): f for f in files } 
+    LABEL_MAP = { _pretty_from_source(f): f for f in files }  # label -> arquivo
     BRAND_LABELS = list(LABEL_MAP.keys())
 else:
     brands_col = sorted(df["marca"].dropna().unique().tolist()) if "marca" in df.columns else []
-    LABEL_MAP = { b: b for b in brands_col }  
+    LABEL_MAP = { b: b for b in brands_col }
     BRAND_LABELS = list(LABEL_MAP.keys())
 
 CAT_CANON = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else []
@@ -138,23 +148,21 @@ CAT_OPTS = ["(todas)"] + (CAT_CANON if CAT_CANON else CAT_PRESENT)
 st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
 st.markdown(f"<div class='subtle' style='margin:.5rem 0 1.25rem 0;'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
 
-# Filtros principais
 st.markdown(f"<div class='section-title'>Filtros</div>", unsafe_allow_html=True)
-
 fc1, fc2, fc3 = st.columns([1.1, 1, 1.2])
 with fc1:
-    sel_brand_label = st.selectbox("Marca (obrigatório)", options=BRAND_LABELS, index=0 if BRAND_LABELS else None)
+    sel_brand_label = st.selectbox(**collapsed_label("Marca (obrigatório)"),
+                                   options=BRAND_LABELS, index=0 if BRAND_LABELS else None)
     sel_brand_value = LABEL_MAP.get(sel_brand_label) if sel_brand_label else None
 with fc2:
-    sel_cat = st.selectbox("Categoria (opcional)", options=CAT_OPTS, index=0)
+    sel_cat = st.selectbox(**collapsed_label("Categoria (opcional)"), options=CAT_OPTS, index=0)
 with fc3:
-    search_ing = st.text_input("Busca rápida (opcional)", value="").strip()
+    search_ben = st.text_input(**collapsed_label("Busca rápida (opcional)"), value="").strip()
 
 if sel_brand_value is None:
     st.info("Selecione uma marca.")
     st.stop()
 
-# Base da marca 
 if uses_files:
     df_brand = df[df["_source_file"] == sel_brand_value].copy()
 else:
@@ -164,7 +172,6 @@ if sel_cat != "(todas)":
 
 # Resumo 
 KPI_BORDER_PX = 3
-
 def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
     st.markdown(
         f"""
@@ -186,77 +193,80 @@ def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
 
 st.markdown(f"<div class='section-title'>Resumo</div>", unsafe_allow_html=True)
 
-exp_brand = explode_ingredients(df_brand)
-total_ing_distintos = exp_brand["ingrediente"].nunique() if not exp_brand.empty else 0
+exp_brand = explode_benefits(df_brand)
+total_ben_distintos = exp_brand["beneficio"].nunique() if not exp_brand.empty else 0
 
-# Top ingrediente 
+# benefício mais usado
 if exp_brand.empty:
-    top_ing, top_count = "—", 0
+    top_ben, top_count = "—", 0
 else:
-    top_s = (exp_brand.groupby("ingrediente")["produto"].nunique()
+    top_s = (exp_brand.groupby("beneficio")["produto"].nunique()
              .sort_values(ascending=False))
-    top_ing = top_s.index[0]; top_count = int(top_s.iloc[0])
+    top_ben = top_s.index[0]; top_count = int(top_s.iloc[0])
 
-# Ingrediente exclusivo na marca 
-exp_all = explode_ingredients(df)
+# benefício exclusivo na marca (só ela possui)
+exp_all = explode_benefits(df)
 exclusivos = []
 if not exp_brand.empty:
-    set_marca = set(exp_brand["ingrediente"].unique())
-    by_brand = exp_all.groupby(["ingrediente"])["marca"].nunique()
-    exclusivos = [ing for ing in set_marca if by_brand.get(ing, 0) == 1]
-ex_ing = exclusivos[0] if exclusivos else "—"
+    set_marca = set(exp_brand["beneficio"].unique())
+    by_brand = exp_all.groupby(["beneficio"])["marca"].nunique()
+    exclusivos = [b for b in set_marca if by_brand.get(b, 0) == 1]
+ex_ben = exclusivos[0] if exclusivos else "—"
 
 k1, k2, k3 = st.columns(3)
 with k1:
-    summary_card("Ingredientes distintos", str(total_ing_distintos), "na marca selecionada", color_idx=0)
+    summary_card("Benefícios distintos", str(total_ben_distintos), "na marca selecionada", color_idx=0)
 with k2:
-    summary_card("Ingrediente mais usado", top_ing, f"{top_count} produto(s)", color_idx=1)
+    summary_card("Benefício mais usado", top_ben, f"{top_count} produto(s)", color_idx=1)
 with k3:
-    summary_card("Ingrediente exclusivo", ex_ing, "apenas nesta marca", color_idx=2)
+    summary_card("Benefício exclusivo", ex_ben, "apenas nesta marca", color_idx=2)
 
 st.markdown("---")
 
-# 1) Distribuição de Ingredientes — Barras/Rosca (+ filtro)
-st.markdown(f"<div class='section-title'>Distribuição de Ingredientes</div>", unsafe_allow_html=True)
+#  1) Distribuição de Benefícios — Barras/Rosca (+ filtro) 
+st.markdown(f"<div class='section-title'>Distribuição de Benefícios</div>", unsafe_allow_html=True)
 
-exp_dist = explode_ingredients(df_brand)
+exp_dist = explode_benefits(df_brand)
 total_produtos_contexto = df_brand["nome"].nunique()
 
-if INGREDIENTES_VALIDOS:
-    ing_present = [i for i in INGREDIENTES_VALIDOS if i in set(exp_dist["ingrediente"].unique())]
+if BENEFICIOS_VALIDOS:
+    ben_present = [b for b in BENEFICIOS_VALIDOS if b in set(exp_dist["beneficio"].unique())]
 else:
-    ing_present = sorted(exp_dist["ingrediente"].dropna().unique().tolist()) if not exp_dist.empty else []
+    ben_present = sorted(exp_dist["beneficio"].dropna().unique().tolist()) if not exp_dist.empty else []
 
 c1, c2 = st.columns([1.0, 1.0])
 with c1:
-    view_opt = st.radio("Visualização", ["Barras", "Rosca"], horizontal=True, key="ing_view")
+    view_opt = st.radio(**collapsed_label("Visualização (benefícios)"),
+                        options=["Barras", "Rosca"], horizontal=True, key="ben_view")
 with c2:
-    ing_mode = st.radio("Ingredientes", ["(Todos)", "Selecionar"], horizontal=True, key="ing_mode")
+    ben_mode = st.radio(**collapsed_label("Benefícios (modo)"),
+                        options=["(Todos)", "Selecionar"], horizontal=True, key="ben_mode")
 
-sel_ings_multi: List[str] = []
-if ing_mode == "Selecionar":
-    sel_ings_multi = st.multiselect("Escolha ingredientes (um ou mais)", options=ing_present, default=ing_present[:10])
+sel_bens_multi: List[str] = []
+if ben_mode == "Selecionar":
+    sel_bens_multi = st.multiselect(**collapsed_label("Benefícios (seleção múltipla)"),
+                                    options=ben_present, default=ben_present[:10])
 
-if search_ing:
-    exp_dist = exp_dist[exp_dist["ingrediente"].str.contains(search_ing, case=False, na=False)]
-if ing_mode == "Selecionar" and sel_ings_multi:
-    exp_dist = exp_dist[exp_dist["ingrediente"].isin(sel_ings_multi)]
+# aplica “Busca rápida” e seleção multi
+if search_ben:
+    exp_dist = exp_dist[exp_dist["beneficio"].str.contains(search_ben, case=False, na=False)]
+if ben_mode == "Selecionar" and sel_bens_multi:
+    exp_dist = exp_dist[exp_dist["beneficio"].isin(sel_bens_multi)]
 
 if exp_dist.empty or total_produtos_contexto == 0:
     st.info("Sem dados para exibir a distribuição.")
 else:
-    by_ing = (exp_dist.groupby("ingrediente")["produto"]
-              .nunique()
-              .reset_index(name="qtd_produtos"))
-    by_ing["pct"] = by_ing["qtd_produtos"] / float(total_produtos_contexto)
-    by_ing = by_ing.sort_values(["qtd_produtos", "ingrediente"], ascending=[False, True])
+    by_ben = (exp_dist.groupby("beneficio")["produto"]
+              .nunique().reset_index(name="qtd_produtos"))
+    by_ben["pct"] = by_ben["qtd_produtos"] / float(total_produtos_contexto)
+    by_ben = by_ben.sort_values(["qtd_produtos", "beneficio"], ascending=[False, True])
 
     if view_opt == "Barras":
         fig = px.bar(
-            by_ing, x="ingrediente", y="qtd_produtos",
+            by_ben, x="beneficio", y="qtd_produtos",
             text="qtd_produtos",
-            color="ingrediente", color_discrete_sequence=SEQ,
-            labels={"ingrediente": "Ingrediente", "qtd_produtos": "Quantos Produtos"},
+            color="beneficio", color_discrete_sequence=SEQ,
+            labels={"beneficio": "Benefício", "qtd_produtos": "Quantos Produtos"},
             hover_data={}
         )
         fig.update_traces(
@@ -264,7 +274,7 @@ else:
             textfont=dict(size=BAR_TEXT_SIZE, color="#363636"),
             hovertemplate="<b>%{x}</b><br>Produtos: %{y} de " + str(total_produtos_contexto) +
                           "<br>Participação: %{customdata[0]}<extra></extra>",
-            customdata=np.array([[pct_str(v, total_produtos_contexto)] for v in by_ing["qtd_produtos"]])
+            customdata=np.array([[pct_str(v, total_produtos_contexto)] for v in by_ben["qtd_produtos"]])
         )
         fig.update_layout(
             height=CHART_HEIGHT, showlegend=False,
@@ -277,7 +287,7 @@ else:
         st.plotly_chart(fig, use_container_width=True)
     else:
         figp = px.pie(
-            by_ing, names="ingrediente", values="qtd_produtos",
+            by_ben, names="beneficio", values="qtd_produtos",
             hole=0.55, color_discrete_sequence=SEQ
         )
         figp.update_traces(
@@ -295,25 +305,25 @@ else:
 
 st.markdown("---")
 
-# 2) Top 5 Ingredientes
-st.markdown(f"<div class='section-title'>Top 5 Ingredientes</div>", unsafe_allow_html=True)
+#  2) Top 5 Benefícios 
+st.markdown(f"<div class='section-title'>Top 5 Benefícios</div>", unsafe_allow_html=True)
 
 if exp_dist.empty or total_produtos_contexto == 0:
     st.info("Sem dados para exibir o Top 5.")
 else:
-    top5 = (exp_dist.groupby("ingrediente")["produto"].nunique()
+    top5 = (exp_dist.groupby("beneficio")["produto"].nunique()
             .reset_index(name="qtd_produtos")
-            .sort_values(["qtd_produtos", "ingrediente"], ascending=[False, True])
+            .sort_values(["qtd_produtos", "beneficio"], ascending=[False, True])
             .head(5))
     top5["pct"] = top5["qtd_produtos"] / float(total_produtos_contexto)
 
     figt = px.bar(
-        top5.sort_values(["qtd_produtos","ingrediente"], ascending=[True, True]),
-        x="qtd_produtos", y="ingrediente",
+        top5.sort_values(["qtd_produtos","beneficio"], ascending=[True, True]),
+        x="qtd_produtos", y="beneficio",
         orientation="h",
         text="qtd_produtos",
-        color="ingrediente", color_discrete_sequence=SEQ,
-        labels={"qtd_produtos": "Quantidade de Produtos", "ingrediente": "Ingrediente"},
+        color="beneficio", color_discrete_sequence=SEQ,
+        labels={"qtd_produtos": "Quantidade de Produtos", "beneficio": "Benefício"},
         hover_data={}
     )
     figt.update_traces(
@@ -334,20 +344,19 @@ else:
 
 st.markdown("---")
 
-# 3) Ingredientes por Categoria (heatmap)
-st.markdown(f"<div class='section-title'>Ingredientes por Categoria</div>", unsafe_allow_html=True)
+#  3) Benefícios por Categoria (heatmap) com seleção 1..10 
+st.markdown(f"<div class='section-title'>Benefícios por Categoria</div>", unsafe_allow_html=True)
 
 if uses_files:
-    exp_brand_allcats = explode_ingredients(df[df["_source_file"] == sel_brand_value])
+    exp_brand_allcats = explode_benefits(df[df["_source_file"] == sel_brand_value])
 else:
-    exp_brand_allcats = explode_ingredients(df[df["marca"] == sel_brand_label])
+    exp_brand_allcats = explode_benefits(df[df["marca"] == sel_brand_label])
 
 if exp_brand_allcats.empty:
-    st.info("Sem ingredientes para construir o mapa por categoria.")
+    st.info("Sem benefícios para construir o mapa por categoria.")
     st.stop()
 
 cat_all = exp_brand_allcats["categoria"].dropna().unique().tolist()
-
 if CATEGORY_CANONICAL_ORDER:
     can_set = set(CATEGORY_CANONICAL_ORDER)
     cat_sorted = [c for c in CATEGORY_CANONICAL_ORDER if c in cat_all] + [c for c in sorted(cat_all) if c not in can_set]
@@ -355,55 +364,51 @@ else:
     cat_sorted = sorted(cat_all)
 
 default_cats = cat_sorted[:min(10, len(cat_sorted))]
-
 sel_cats_hm = st.multiselect(
-    "Categorias (selecione de 1 a 10)",
+    **collapsed_label("Categorias (heatmap)"),
     options=cat_sorted,
     default=default_cats,
     max_selections=10,
-    help="Escolha até 10 categorias para o mapa de calor."
+    help="Escolha de 1 a 10 categorias para o mapa de calor."
 )
-
 if not sel_cats_hm:
     st.warning("Selecione pelo menos uma categoria para exibir o mapa.")
     st.stop()
 
 exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["categoria"].isin(sel_cats_hm)]
 
-if "ing_mode" in st.session_state and st.session_state["ing_mode"] == "Selecionar":
-    if 'sel_ings_multi' in locals() and sel_ings_multi:
-        exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["ingrediente"].isin(sel_ings_multi)]
-elif 'search_ing' in locals() and search_ing:
-    exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["ingrediente"].str.contains(search_ing, case=False, na=False)]
+if ben_mode == "Selecionar" and sel_bens_multi:
+    exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["beneficio"].isin(sel_bens_multi)]
+elif search_ben:
+    exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["beneficio"].str.contains(search_ben, case=False, na=False)]
 
 if exp_brand_allcats.empty:
-    st.info("Sem ingredientes para construir o mapa por categoria com os filtros atuais.")
+    st.info("Sem benefícios para o mapa por categoria com os filtros atuais.")
 else:
-
-    if 'sel_ings_multi' in locals() and sel_ings_multi:
-        ing_focus = sel_ings_multi
+    if ben_mode == "Selecionar" and sel_bens_multi:
+        ben_focus = sel_bens_multi
     else:
         N_TOP = 12
-        ing_focus = (exp_brand_allcats.groupby("ingrediente")["produto"]
+        ben_focus = (exp_brand_allcats.groupby("beneficio")["produto"]
                      .nunique().sort_values(ascending=False).head(N_TOP).index.tolist())
 
-    sub = exp_brand_allcats[exp_brand_allcats["ingrediente"].isin(ing_focus)]
-    pivot = (sub.groupby(["categoria", "ingrediente"])["produto"]
+    sub = exp_brand_allcats[exp_brand_allcats["beneficio"].isin(ben_focus)]
+    pivot = (sub.groupby(["categoria", "beneficio"])["produto"]
              .nunique().unstack(fill_value=0))
 
     pivot = pivot.loc[[c for c in sel_cats_hm if c in pivot.index], :]
 
     n_seq = len(SEQ)
     if n_seq >= 18:
-        block = n_seq // 4                  
-        third_line = SEQ[2*block:3*block]   
+        block = n_seq // 4
+        third_line = SEQ[2*block:3*block]
     else:
         third_line = SEQ
 
     custom_scale = [
-        (0.0, "#ffffff"),  
-        (0.05, "#f0f0f0"),  
-        (0.15, "#d9d9d9"), 
+        (0.0, "#ffffff"),
+        (0.05, "#f0f0f0"),
+        (0.15, "#d9d9d9"),
     ]
     steps = np.linspace(0.2, 1, len(third_line))
     for pos, color in zip(steps, third_line):
@@ -411,15 +416,12 @@ else:
 
     fig_hm = px.imshow(
         pivot,
-        color_continuous_scale=custom_scale,  
+        color_continuous_scale=custom_scale,
         aspect="auto",
         labels=dict(color="Produtos"),
-        title=f"Categorias × Ingredientes — {sel_brand_label}"
+        title=f"Categorias × Benefícios — {sel_brand_label}"
     )
-    fig_hm.update_layout(
-        font=dict(size=52)  
-    )
-
+    fig_hm.update_layout(font=dict(size=24))
     fig_hm.update_layout(
         height=CHART_HEIGHT,
         coloraxis_colorbar=dict(title="Produtos", tickfont=dict(size=AXIS_TICK_SIZE)),
@@ -429,66 +431,68 @@ else:
     )
     st.plotly_chart(fig_hm, use_container_width=True)
 
-
 st.markdown("---")
 
-# 4) Comparação entre Marcas
-st.markdown(f"<div class='section-title'>Comparação de Ingredientes entre Marcas</div>", unsafe_allow_html=True)
+#  4) Comparação entre Marcas 
+st.markdown(f"<div class='section-title'>Comparação de Benefícios entre Marcas</div>", unsafe_allow_html=True)
 
 comp_labels = st.multiselect(
-    "Marcas (máx. 3)",
+    **collapsed_label("Marcas (comparação)"),
     options=BRAND_LABELS,
     default=[sel_brand_label],
     max_selections=3
 )
 
-cmp_ing_mode = st.radio("Ingredientes (comparação)", ["(Todos)", "Selecionar"], horizontal=True, key="cmp_ing_mode")
+cmp_ben_mode = st.radio(
+    **collapsed_label("Benefícios (comparação)"),
+    options=["(Todos)", "Selecionar"], horizontal=True, key="cmp_ben_mode"
+)
 
-# opções de ingredientes para comparação
 cmp_opts: List[str] = []
-if cmp_ing_mode == "Selecionar":
+if cmp_ben_mode == "Selecionar":
     if comp_labels:
         tmp = []
         for lab in comp_labels:
             val = LABEL_MAP[lab]
             base = df[df["_source_file"] == val] if uses_files else df[df["marca"] == lab]
-            tmp.append(explode_ingredients(base)[["ingrediente"]])
-        exist = sorted(pd.concat(tmp)["ingrediente"].dropna().unique().tolist()) if tmp else []
-        cmp_opts = [i for i in INGREDIENTES_VALIDOS if i in set(exist)] if INGREDIENTES_VALIDOS else exist
+            tmp.append(explode_benefits(base)[["beneficio"]])
+        exist = sorted(pd.concat(tmp)["beneficio"].dropna().unique().tolist()) if tmp else []
+        cmp_opts = [b for b in BENEFICIOS_VALIDOS if b in set(exist)] if BENEFICIOS_VALIDOS else exist
     else:
-        exist = explode_ingredients(df)["ingrediente"].dropna().unique().tolist()
-        cmp_opts = [i for i in INGREDIENTES_VALIDOS if i in set(exist)] if INGREDIENTES_VALIDOS else sorted(exist)
+        exist = explode_benefits(df)["beneficio"].dropna().unique().tolist()
+        cmp_opts = [b for b in BENEFICIOS_VALIDOS if b in set(exist)] if BENEFICIOS_VALIDOS else sorted(exist)
 
-cmp_sel_ings: List[str] = []
-if cmp_ing_mode == "Selecionar":
-    cmp_sel_ings = st.multiselect("Ingredientes (um ou mais)", options=cmp_opts, default=cmp_opts[:10])
+cmp_sel_bens: List[str] = []
+if cmp_ben_mode == "Selecionar":
+    cmp_sel_bens = st.multiselect(**collapsed_label("Benefícios (seleção múltipla)"),
+                                  options=cmp_opts, default=cmp_opts[:10])
 
 if comp_labels:
     dfs_comp = []
     for lab in comp_labels:
         val = LABEL_MAP[lab]
         base = df[df["_source_file"] == val] if uses_files else df[df["marca"] == lab]
-        exp_ = explode_ingredients(base)
-        if cmp_ing_mode == "Selecionar" and cmp_sel_ings:
-            exp_ = exp_[exp_["ingrediente"].isin(cmp_sel_ings)]
-        grp = (exp_.groupby("ingrediente")["produto"].nunique().reset_index(name="produtos"))
+        exp_ = explode_benefits(base)
+        if cmp_ben_mode == "Selecionar" and cmp_sel_bens:
+            exp_ = exp_[exp_["beneficio"].isin(cmp_sel_bens)]
+        grp = (exp_.groupby("beneficio")["produto"].nunique().reset_index(name="produtos"))
         grp["marca_label"] = lab
         dfs_comp.append(grp)
     comp_df = pd.concat(dfs_comp, ignore_index=True) if dfs_comp else pd.DataFrame()
     if comp_df.empty:
         st.info("Sem dados para comparar.")
     else:
-        if cmp_ing_mode == "(Todos)":
+        if cmp_ben_mode == "(Todos)":
             N_TOP = 12
-            topN = (comp_df.groupby("ingrediente")["produtos"].sum()
+            topN = (comp_df.groupby("beneficio")["produtos"].sum()
                     .sort_values(ascending=False).head(N_TOP).index.tolist())
-            comp_df = comp_df[comp_df["ingrediente"].isin(topN)]
+            comp_df = comp_df[comp_df["beneficio"].isin(topN)]
         fig_cmp = px.bar(
             comp_df,
-            x="ingrediente", y="produtos",
+            x="beneficio", y="produtos",
             color="marca_label", barmode="group",
-            color_discrete_sequence=[SEQ[4]],
-            labels={"ingrediente": "Ingrediente", "produtos": "Produtos", "marca_label": "Marca"}
+            color_discrete_sequence=SEQ,  
+            labels={"beneficio": "Benefício", "produtos": "Produtos", "marca_label": "Marca"}
         )
         fig_cmp.update_layout(
             height=CHART_HEIGHT,
@@ -504,29 +508,12 @@ else:
 
 st.markdown("---")
 
-# 5) Pesquisa por Ingrediente — cards estilizados
+#  5) Pesquisa por Benefício — cards estilizados 
 st.markdown(
-    f"<h3 style='font-size:{SECTION_TITLE_SIZE}px; margin:.75rem 0 .5rem 0; color:{accent(0)}'>Pesquisa por Ingrediente</h3>",
+    f"<h3 style='font-size:{SECTION_TITLE_SIZE}px; margin:.75rem 0 .5rem 0; color:{accent(0)}'>Pesquisa por Benefício</h3>",
     unsafe_allow_html=True
 )
 
-# ---- inputs (labels grandes, mas escondendo labels nativos) ----
-st.markdown(
-    f"""
-    <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px; align-items:end; margin:.25rem 0 .5rem 0;">
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Ingrediente</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Marca</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Categoria</div></div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# --- helper opcional para padronizar labels colapsados ---
-def collapsed_label(lbl: str) -> dict:
-    return {"label": lbl, "label_visibility": "collapsed"}
-
-# 5) Pesquisa por Benefício — inputs (com labels acessíveis e colapsados)
 st.markdown(
     f"""
     <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px; align-items:end; margin:.25rem 0 .5rem 0;">
@@ -540,28 +527,17 @@ st.markdown(
 
 c1, c2, c3 = st.columns([1.3, 1, 1])
 with c1:
-    q_ben = st.text_input(
-        **collapsed_label("Benefício (pesquisa)"),
-        placeholder="Ex.: hidratação"
-    ).strip()
-
+    q_ben = st.text_input(**collapsed_label("Benefício (pesquisa)"),
+                          placeholder="Ex.: hidratação").strip()
 with c2:
-    p_brand_lab = st.selectbox(
-        **collapsed_label("Marca (filtro)"),
-        options=["(todas)"] + BRAND_LABELS,
-        index=0
-    )
-
+    p_brand_lab = st.selectbox(**collapsed_label("Marca (filtro)"),
+                               options=["(todas)"] + BRAND_LABELS, index=0)
 with c3:
-    p_cat = st.selectbox(
-        **collapsed_label("Categoria (filtro)"),
-        options=CAT_OPTS,
-        index=0
-    )
+    p_cat = st.selectbox(**collapsed_label("Categoria (filtro)"),
+                         options=CAT_OPTS, index=0)
 
-
-if not q_ing:
-    st.caption("Dica: pesquise um ingrediente e filtre por marca/categoria para ver os produtos correspondentes.")
+if not q_ben:
+    st.caption("Dica: pesquise um benefício e filtre por marca/categoria para ver os produtos correspondentes.")
     st.stop()
 
 df_p = df.copy()
@@ -571,11 +547,10 @@ if p_brand_lab != "(todas)":
 if p_cat != "(todas)":
     df_p = df_p[df_p["categoria"] == p_cat]
 
-exp_p = explode_ingredients(df_p)
-hit = exp_p[exp_p["ingrediente"].str.contains(q_ing, case=False, na=False)]
-
+exp_p = explode_benefits(df_p)
+hit = exp_p[exp_p["beneficio"].str.contains(q_ben, case=False, na=False)]
 if hit.empty:
-    st.info("Nenhum produto encontrado para esse ingrediente nos filtros atuais.")
+    st.info("Nenhum produto encontrado para esse benefício nos filtros atuais.")
     st.stop()
 
 prods = (
@@ -590,41 +565,30 @@ st.markdown(f"""
 <style>
 .product-card {{
   border: 2px solid #ececf1; border-radius: 14px;
-  padding: 14px 18px; background: #fff;
+  padding: 12px 16px; background: #fff;
   box-shadow: 0 2px 2px rgba(0,0,0,0.04);
-  display: grid; grid-template-columns: .4fr .6fr .8fr; gap: 18px;
+  display: grid; grid-template-columns: 1.2fr .5fr 1fr; gap: 14px;
   align-items: center;
 }}
-.product-card + .product-card {{ margin-top: 12px; }}
-.p-name {{ font-weight: 800; font-size: 24px; color: {text_color()}; line-height: 1.25; }}
-.p-brand {{ font-size: 28px; color: #7a7a7a; margin-top: 2px; }}
-.p-price {{ font-weight: 1200; font-size: 28px; color: {accent(2)}; text-align: right; }}
-.p-qty   {{ font-size: 20px; color:#777; text-align: right; }}
-.p-pills {{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }}
+.product-card + .product-card {{ margin-top: 10px; }}
+.p-name {{ font-weight: 800; font-size: 22px; color: {text_color()}; line-height: 1.2; }}
+.p-brand {{ font-size: 14px; color: #7a7a7a; margin-top: 2px; }}
+.p-price {{ font-weight: 900; font-size: 22px; color: {accent(2)}; text-align: right; }}
+.p-qty   {{ font-size: 14px; color:#777; text-align: right; }}
+.p-pills {{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }}
 .pill {{
   display:inline-block; padding: 4px 8px; border-radius: 999px;
   border:1px solid #e5e7eb; background:#f7f7fb; color:#313244;
-  font-size: 18px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
 }}
 .pill.cat  {{ background: {accent(0)}22; border-color:{accent(0)}55; color:{accent(0)}; }}
 .pill.hit  {{ background: {accent(1)}22; border-color:{accent(1)}55; color:{accent(1)}; }}
 </style>
 """, unsafe_allow_html=True)
 
-def brl(x):
-    if x is None or pd.isna(x): return "—"
-    return f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-def fmt_qtd(v, u):
-    if pd.isna(v): return "—"
-    try:
-        v = float(v)
-        vtxt = f"{int(v)}" if v.is_integer() else f"{v:.0f}" if v >= 100 else f"{v:.2f}"
-    except Exception:
-        vtxt = str(v)
-    return f"{vtxt}{(' ' + u) if isinstance(u, str) and u else ''}"
-
 base = df_p[df_p["nome"].isin(prods["Produto"])].copy()
 
+# renderiza cards
 for nome_prod in prods["Produto"].tolist():
     sub = base[base["nome"] == nome_prod]
     if sub.empty:
@@ -635,13 +599,14 @@ for nome_prod in prods["Produto"].tolist():
     preco = brl(row.get("preco"))
     qty = fmt_qtd(row.get("quantidade_valor"), row.get("quantidade_unidade"))
 
-    exp_one = explode_ingredients(sub)
-    ing_all = exp_one["ingrediente"].dropna().unique().tolist()
-    hit_mask = exp_one["ingrediente"].str.contains(q_ing, case=False, na=False)
-    ing_hits = exp_one.loc[hit_mask, "ingrediente"].dropna().unique().tolist()
+    exp_one = explode_benefits(sub)
+    ben_all = exp_one["beneficio"].dropna().unique().tolist()
+    hit_mask = exp_one["beneficio"].str.contains(q_ben, case=False, na=False)
+    ben_hits = exp_one.loc[hit_mask, "beneficio"].dropna().unique().tolist()
 
-    ing_hits_show = ing_hits[:2]
-    ing_others = [i for i in ing_all if i not in ing_hits_show][:3]
+    # 2 destaques + 3 gerais
+    ben_hits_show = ben_hits[:2]
+    ben_others = [b for b in ben_all if b not in ben_hits_show][:3]
 
     st.markdown(
         f"""
@@ -658,8 +623,8 @@ for nome_prod in prods["Produto"].tolist():
 
           <div class="p-pills">
             <span class="pill cat">{categoria}</span>
-            {''.join(f'<span class="pill hit">{i}</span>' for i in ing_hits_show)}
-            {''.join(f'<span class="pill">{i}</span>' for i in ing_others)}
+            {''.join(f'<span class="pill hit">{b}</span>' for b in ben_hits_show)}
+            {''.join(f'<span class="pill">{b}</span>' for b in ben_others)}
           </div>
         </div>
         """,

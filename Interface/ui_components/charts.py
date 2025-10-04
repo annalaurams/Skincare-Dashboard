@@ -1,15 +1,16 @@
-# ui_components/charts.py
 from __future__ import annotations
 import sys
+from pathlib import Path
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 from core.theme import color_sequence
 
-# importa lista canônica
 sys.path.append("/home/usuario/Área de trabalho/Dados/models")
-from category import CATEGORY_CANONICAL_ORDER  # noqa: E402
+try:
+    from category import CATEGORY_CANONICAL_ORDER
+except Exception:
+    CATEGORY_CANONICAL_ORDER = None
 
 def apply_filters(
     df: pd.DataFrame,
@@ -18,144 +19,160 @@ def apply_filters(
     source_files: list[str] | None = None
 ) -> pd.DataFrame:
     out = df.copy()
-    # 1) Filtra pelos arquivos (marca == CSV)
     if source_files is not None and "_source_file" in out.columns:
         if source_files:
             out = out[out["_source_file"].isin(source_files)]
         else:
             return out.iloc[0:0]
-    # 2) (opcional) fallback por coluna 'marca' se você usar isso em outro lugar
     if marcas:
         out = out[out["marca"].isin(marcas)]
-    # 3) Categoria selecionada
     if cats:
         out = out[out["categoria"].isin(cats)]
     return out
+
+def _pretty_from_source(fname: str) -> str:
+    stem = Path(fname).stem
+    # for suf in ["_products", "_skincare", "_cosmetics", "_dados"]:
+    for suf in ["_products"]:
+        stem = stem.replace(suf, "")
+    return stem.replace("_", " ").title()
+
+
 def chart_produtos_por_categoria(
     df: pd.DataFrame,
     palette_name: str,
     key_prefix: str = "cat",
-    # ▼ CONTROLES NOVOS
-    show_bottom_legend: bool = False,   # False = sem legenda embaixo
-    legend_size: int = 20,              # tamanho da fonte da legenda
-    itemwidth: int = 180,               # “largura” de item p/ quebrar em colunas
-    legend_y: float = -0.45,            # distância vertical da legenda (barras)
-    margin_b: int = 180,                # margem inferior extra p/ caber a legenda
-    bar_text_size: int = 16             # fonte dos números nas barras
+    show_bottom_legend: bool = False,
+    legend_size: int = 30,
+    itemwidth: int = 180,
+    legend_y: float = -0.45,
+    margin_b: int = 180,
+    bar_text_size: int = 18,
+    selected_files: list[str] | None = None,
+    hover_box: str = "right",
+    order_option: str | None = None,
+    show_internal_title: bool = False
 ):
     import math
 
-    st.markdown(
-        "<span style='font-size:28px; font-weight:500;'>Distribuição de Produtos por Categoria</span>",
-        unsafe_allow_html=True
-    )
     if df.empty:
         st.warning("Nenhum dado para exibir.")
         return
 
-    # Contagem por LINHAS (cada produto = 1 linha)
-    dist = (
-        df.groupby("categoria")["nome"].size()
-          .reset_index(name="quantidade")
-    )
+    # tooltip
+    cats = sorted([c for c in df["categoria"].dropna().unique().tolist()])
+    cat_title = cats[0] if len(cats) == 1 else "Várias categorias"
 
-    # Ordena por ordem canônica
-    dist["categoria"] = pd.Categorical(
-        dist["categoria"], categories=CATEGORY_CANONICAL_ORDER, ordered=True
-    )
-    dist = dist.sort_values(["categoria"]).reset_index(drop=True)
+    uses_files = "_source_file" in df.columns
+    if uses_files:
+        base = df[df["_source_file"].isin(selected_files)].copy() if selected_files else df.copy()
+        dist = base.groupby("_source_file")["nome"].size().reset_index(name="quantidade")
+        dist["marca"] = dist["_source_file"].apply(_pretty_from_source)
+        key_col = "_source_file"
+        label_col = "marca"
+    else:
+        base = df.copy()
+        if "marca" not in base.columns:
+            st.warning("Não há coluna de marca nem _source_file para segmentar.")
+            return
+        dist = base.groupby("marca")["nome"].size().reset_index(name="quantidade")
+        key_col = "marca"
+        label_col = "marca"
 
-    if dist.empty:
-        st.info("Não há categorias com produtos para os filtros atuais.")
-        return
+    if order_option == "Quantidade (crescente)":
+        dist = dist.sort_values(["quantidade", label_col], ascending=[True, True]).reset_index(drop=True)
+    elif order_option == "Alfabética":
+        dist = dist.sort_values(label_col, ascending=True).reset_index(drop=True)
+    elif order_option == "Ordem Canônica" and CATEGORY_CANONICAL_ORDER:
+
+        _CAT_ORDER_MAP = {c: i for i, c in enumerate(CATEGORY_CANONICAL_ORDER)}
+        dist["cat_order"] = dist[label_col].map(_CAT_ORDER_MAP).fillna(9999)
+        dist = dist.sort_values(["cat_order", label_col]).reset_index(drop=True)
+        dist = dist.drop(columns=["cat_order"])
+    else:
+        dist = dist.sort_values(["quantidade", label_col], ascending=[False, True]).reset_index(drop=True)
 
     seq = color_sequence(palette_name)
     tabs = st.tabs(["Barras", "Rosca"])
 
-    # -------------------- BARRAS --------------------
+    # BARRAS 
     with tabs[0]:
-        orient = st.radio(
-            "Orientação",
-            ["Vertical", "Horizontal"],
-            horizontal=True,
-            key=f"orient_{key_prefix}"
+        hovermode_layout = {"hovermode": "closest",
+                            "hoverlabel": dict(font_size=22, font_color="gray", bgcolor="white", align="left")}
+
+        fig = px.bar(
+            dist,
+            x=label_col, y="quantidade",
+            text="quantidade",
+            labels={label_col: "Marca", "quantidade": "Número de produtos"},
+            hover_data={}
+        )
+        # cores por barra 
+        colors = (seq * ((len(dist) // max(1, len(seq))) + 1))[:len(dist)]
+        fig.update_traces(
+            marker_color=colors,
+            textposition="outside",
+            textfont=dict(size=bar_text_size, color="#363636"),
+            hovertemplate="<b>%{x}</b><br>Categoria: <b>" + cat_title + "</b><br>Quantidade: %{y}<extra></extra>"
         )
 
-        if orient == "Vertical":
-            fig = px.bar(
-                dist, x="categoria", y="quantidade",
-                color="categoria", color_discrete_sequence=seq,
-                text="quantidade",
-                labels={"categoria": "Categoria", "quantidade": "Número de produtos"}
-            )
-            fig.update_traces(textposition="outside",
-                              textfont=dict(size=bar_text_size, color="#363636"))
-        else:
-            fig = px.bar(
-                dist, x="quantidade", y="categoria", orientation="h",
-                color="categoria", color_discrete_sequence=seq,
-                text="quantidade",
-                labels={"categoria": "Categoria", "quantidade": "Número de produtos"}
-            )
-            fig.update_traces(textposition="outside",
-                              textfont=dict(size=bar_text_size, color="#363636"))
-
-        # ====== LEGENDA (REMOVIDA OU EMBAIXO) ======
-        n_items = dist["categoria"].nunique()
-        cols = 1 if itemwidth <= 0 else max(1, math.floor(1000 / itemwidth))  # estimativa de colunas
+        n_items = dist[label_col].nunique()
+        cols = 1 if itemwidth <= 0 else max(1, math.floor(1000 / itemwidth))
         rows = math.ceil(n_items / max(1, cols))
 
-        # layout base
         layout_kwargs = dict(
-            height=750,  # mais comprido pra não cortar textos
-            legend_title_text="",         # remove o “Categoria”
-            xaxis_tickangle=-20 if orient == "Vertical" else 0,
-            xaxis=dict(title_font=dict(size=18, color="#363636"),
-                       tickfont=dict(size=14, color="#363636")),
-            yaxis=dict(title_font=dict(size=18, color="#363636"),
-                       tickfont=dict(size=14, color="#363636")),
-            margin=dict(t=80, b=100 if not show_bottom_legend else margin_b, r=20, l=20),
+            height=750,
+            legend_title_text="",
+            xaxis_tickangle=-15,
+            xaxis=dict(title_font=dict(size=28, color="#363636"),
+                       tickfont=dict(size=22, color="#363636")),
+            yaxis=dict(title_font=dict(size=28, color="#363636"),
+                       tickfont=dict(size=22, color="#363636")),
+            margin=dict(t=40, b=100 if not show_bottom_legend else margin_b, r=20, l=20),
+            title=dict(text=f"Categoria: {cat_title}", font=dict(size=24, color="#363636"))
         )
+        # if show_bottom_legend:
+        #     layout_kwargs.update(dict(
+        #         showlegend=True,
+        #         legend=dict(
+        #             orientation="h",
+        #             y=legend_y - (rows-1)*0.02,
+        #             x=0.5, xanchor="center",
+        #             itemwidth=itemwidth if itemwidth > 0 else None,
+        #             traceorder="normal",
+        #             font=dict(size=legend_size, color="#363636")
+        #         ),
+        #     ))
+        # else:
+        layout_kwargs.update(dict(showlegend=False))
 
-        if show_bottom_legend:
-            layout_kwargs.update(dict(
-                showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    y=legend_y - (rows-1)*0.02,  # empurra conforme nº de linhas
-                    x=0.5, xanchor="center",
-                    itemwidth=itemwidth if itemwidth > 0 else None,
-                    traceorder="normal",
-                    font=dict(size=legend_size, color="#363636")
-                ),
-            ))
-        else:
-            layout_kwargs.update(dict(showlegend=False))
-
-        fig.update_layout(**layout_kwargs)
-        # Evita que os textos “cortem” na borda
+        fig.update_layout(**layout_kwargs, **hovermode_layout)
         fig.update_yaxes(automargin=True)
         fig.update_xaxes(automargin=True)
         st.plotly_chart(fig, use_container_width=True)
 
-    # -------------------- ROSCA --------------------
+    # ROSCA 
     with tabs[1]:
         figp = px.pie(
-            dist, names="categoria", values="quantidade",
-            hole=0.55, color="categoria", color_discrete_sequence=seq
+            dist,
+            names=label_col, values="quantidade",
+            hole=0.55, color=label_col, color_discrete_sequence=seq
         )
-        figp.update_traces(textposition="inside", textinfo="percent+label",
-                           textfont=dict(size=18, color="#363636"))
-
-        # legenda ao lado, levemente mais para dentro; sem título
+        figp.update_traces(
+            textposition="inside", textinfo="percent+label",
+            textfont=dict(size=28, color="#363636"),
+            hovertemplate="<b>%{label}</b><br>Categoria: <b>" + cat_title + "</b><br>Quantidade: %{value} (%{percent:.1%})<extra></extra>"
+        )
         figp.update_layout(
-            height=650,
-            margin=dict(t=60, b=40, l=40, r=140),
+            height=750,
+            margin=dict(t=40, b=40, l=40, r=140),
             legend_title_text="",
             legend=dict(
                 x=0.86, xanchor="left",
                 y=0.98, yanchor="top",
-                font=dict(size=25, color="#363636")
-            )
+                font=dict(size=30, color="#363636")
+            ),
+            title=dict(text=f"Categoria: {cat_title}", font=dict(size=24, color="#363636")),
+            hoverlabel=dict(font_size=22, font_color="gray", bgcolor="white", align="left")
         )
         st.plotly_chart(figp, use_container_width=True)

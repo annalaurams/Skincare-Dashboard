@@ -24,7 +24,7 @@ def _read_one_csv(p: Path) -> pd.DataFrame | None:
         st.warning(f"Pulando {p.name}: colunas ausentes {miss}")
         return None
 
-    df["_source_file"] = p.name  # útil para rastrear a origem
+    df["_source_file"] = p.name  
     return df
 
 @st.cache_data(show_spinner=True)

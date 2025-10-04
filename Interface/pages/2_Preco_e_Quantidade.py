@@ -1,40 +1,44 @@
-# Preco_Quantidade.py
 from __future__ import annotations
 import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+from pathlib import Path
+import sys
 
 from core.theme import apply_base_theme, apply_palette_css, color_sequence
 from core.data import load_data
 
+sys.path.append("/home/usuario/Área de trabalho/Dados/models")
+try:
+    from category import CATEGORY_CANONICAL_ORDER  
+except Exception:
+    CATEGORY_CANONICAL_ORDER = []
+
+if "palette_name" not in st.session_state:
+    st.session_state["palette_name"] = "Solaris"  
+
 st.set_page_config(page_title="Skincare • Preço & Quantidade", page_icon="📊", layout="wide")
 
-# =========================
-# APARÊNCIA (edite aqui)
-# =========================
 TITLE_TEXT          = "Preço & Quantidade"
-TAGLINE_TEXT        = "Compare preços, identifique o melhor custo por unidade e veja a relação preço × quantidade."
-TITLE_SIZE          = 30     # h1
-TAGLINE_SIZE        = 16     # subtítulo
-SECTION_TITLE_SIZE  = 22     # títulos de seção
-AXIS_TITLE_SIZE     = 18
-AXIS_TICK_SIZE      = 14
-LEGEND_FONT_SIZE    = 16
-SCATTER_MARKER_SIZE = 14     # bolinhas do scatter
-CHART_HEIGHT        = 560
+TAGLINE_TEXT        = "Compare os valores, identifique o melhor custo por unidade e veja a relação preço × quantidade."
+TITLE_SIZE          = 60
+TAGLINE_SIZE        = 26
+SECTION_TITLE_SIZE  = 32
+AXIS_TITLE_SIZE     = 24
+AXIS_TICK_SIZE      = 24
+LEGEND_FONT_SIZE    = 34
+SCATTER_MARKER_SIZE = 18
+CHART_HEIGHT        = 750
 
-# KPI cards (tamanho/estética)
-KPI_CARD_HEIGHT     = 110
-KPI_BORDER_PX       = 3
+KPI_CARD_HEIGHT     = 180
+KPI_BORDER_PX       = 5
 
-# =========================
-# Tema claro + paleta (persistente)
-# =========================
-if "palette_name" not in st.session_state:
-    st.session_state["palette_name"] = "Roxo & Rosa"
+KPI_TITLE_SIZE      = 30
+KPI_VALUE_SIZE      = 10
+KPI_HELP_SIZE       = 20
 
-apply_base_theme()  # claro fixo
+apply_base_theme() 
 apply_palette_css(st.session_state["palette_name"])
 SEQ = color_sequence(st.session_state["palette_name"])
 
@@ -43,9 +47,14 @@ def text_color() -> str:       return "#262730"
 def subtext_color() -> str:    return "#555"
 def panel_bg() -> str:         return "#ffffff"
 
-# =========================
-# Helpers
-# =========================
+
+def _pretty_from_source(fname: str) -> str:
+
+    stem = Path(fname).stem
+    for suf in ["_products", "_skincare", "_cosmetics", "_dados"]:
+        stem = stem.replace(suf, "")
+    return stem.replace("_", " ").title()
+
 def brl(x: float | int | None) -> str:
     if x is None or pd.isna(x): return "—"
     return f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -53,6 +62,20 @@ def brl(x: float | int | None) -> str:
 def most_common_unit(df: pd.DataFrame) -> str | None:
     s = df["quantidade_unidade"].dropna()
     return s.value_counts().idxmax() if not s.empty else None
+
+def fmt_qtd(val, unit) -> str:
+    if pd.isna(val): return "—"
+    if pd.isna(unit) or unit is None:
+        try:
+            return f"{float(val):.2f}"
+        except Exception:
+            return str(val)
+    try:
+        if float(val).is_integer():
+            return f"{int(val)} {unit}"
+    except Exception:
+        pass
+    return f"{float(val):.2f} {unit}"
 
 def style_axes(fig, height: int = CHART_HEIGHT):
     fig.update_layout(
@@ -69,14 +92,27 @@ def style_axes(fig, height: int = CHART_HEIGHT):
     )
     return fig
 
-# =========================
-# Dados
-# =========================
-df = load_data()  # carrega todos CSVs (com _source_file, preco float, quantidade_valor/unidade, etc.)
 
-# =========================
+df = load_data()  
+
+# Preparação de listas (mesma lógica da tela principal)
+
+uses_files = "_source_file" in df.columns and df["_source_file"].notna().any()
+
+if uses_files:
+    files = sorted(df["_source_file"].dropna().unique().tolist())
+    LABEL_MAP = { _pretty_from_source(f): f for f in files }  
+    BRAND_LABELS = list(LABEL_MAP.keys())  
+else:
+   
+    brands_col = sorted(df["marca"].dropna().unique().tolist()) if "marca" in df.columns else []
+    LABEL_MAP = { b: b for b in brands_col } 
+    BRAND_LABELS = list(LABEL_MAP.keys())
+
+CAT_OPTS = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else sorted(df["categoria"].dropna().unique().tolist())
+
 # Título + Tagline
-# =========================
+
 st.markdown(
     f"<h1 style='margin:0;color:{accent(0)};font-size:{TITLE_SIZE}px'>{TITLE_TEXT}</h1>",
     unsafe_allow_html=True,
@@ -86,52 +122,60 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# =======================================================
-# FILTROS (UMA VEZ) — KPIs e “Melhores ofertas”
-#   • marca: 1 (obrigatório)
-#   • categoria: 1 (obrigatório)
-# =======================================================
-st.markdown(f"<h3 style='font-size:{SECTION_TITLE_SIZE}px;margin:.75rem 0 .5rem 0;'>Filtros</h3>", unsafe_allow_html=True)
-brands = sorted(df["marca"].dropna().unique().tolist())
-cats   = sorted(df["categoria"].dropna().unique().tolist())
+# FILTROS (OBRIGATÓRIOS) — KPIs
 
-fc1, fc2 = st.columns(2)
-with fc1:
-    sel_brand_kpi = st.selectbox("Marca (KPIs / Ofertas)", options=brands, index=0)
-with fc2:
-    sel_cat_kpi   = st.selectbox("Categoria (KPIs / Ofertas)", options=cats, index=0)
+st.markdown(f"<h3 style='font-size:32px;margin:.75rem 0 .5rem 0;'>Filtros</h3>", unsafe_allow_html=True)
 
-df_kpi = df[(df["marca"] == sel_brand_kpi) & (df["categoria"] == sel_cat_kpi)].copy()
+# Marca 
+sel_brand_label_kpi = st.selectbox("Marca (KPIs / Ofertas)", options=BRAND_LABELS, index=0)
+sel_brand_value_kpi = LABEL_MAP[sel_brand_label_kpi]
 
-# =========================
-# KPIs (3) – preço médio, quantidade média, melhor custo
-# =========================
-def kpi_box(title: str, value: str, help_text: str = "", color_idx: int = 0):
+if uses_files:
+    df_brand_for_default = df[df["_source_file"] == sel_brand_value_kpi]
+else:
+    df_brand_for_default = df[df["marca"] == sel_brand_value_kpi]
+present_cats_for_brand = [c for c in CAT_OPTS if c in df_brand_for_default["categoria"].dropna().unique().tolist()]
+default_cat_for_brand = present_cats_for_brand[0] if present_cats_for_brand else (CAT_OPTS[0] if CAT_OPTS else None)
+default_cat_index = CAT_OPTS.index(default_cat_for_brand) if (default_cat_for_brand in CAT_OPTS) else 0
+
+sel_cat_kpi = st.selectbox("Categoria (KPIs / Ofertas)", options=CAT_OPTS, index=default_cat_index)
+
+
+if uses_files:
+    df_kpi = df[(df["_source_file"] == sel_brand_value_kpi) & (df["categoria"] == sel_cat_kpi)].copy()
+else:
+    df_kpi = df[(df["marca"] == sel_brand_value_kpi) & (df["categoria"] == sel_cat_kpi)].copy()
+
+#  preço médio, quantidade média, melhor custo
+
+def kpi_box(title: str, value: str, help_text: str = "", color_idx: int = 0, custom_value_size: int = None):
+    value_size = custom_value_size if custom_value_size is not None else KPI_VALUE_SIZE
     st.markdown(
         f"""
         <div style="
             border:{KPI_BORDER_PX}px solid {accent(color_idx)};
-            border-radius:14px; padding:12px 14px; background:{panel_bg()};
-            display:flex; flex-direction:column; gap:.3rem; height:{KPI_CARD_HEIGHT}px;">
-          <span style="font-size:{TAGLINE_SIZE-2}px; color:{subtext_color()};">{title}</span>
-          <div style="font-weight:800; font-size:{TITLE_SIZE-8}px; color:{text_color()}; line-height:1;">
+            border-radius:30px; padding:30px 30px; background:{panel_bg()};
+            display:flex; flex-direction:column; gap:.3rem; width:700px;  height:{KPI_CARD_HEIGHT}px;">
+          <span style="font-size:{KPI_TITLE_SIZE}px; color:{subtext_color()};">{title}</span>
+          <div style="font-weight:800; font-size:{value_size}px; color:{text_color()}; line-height:1;">
             {value}
           </div>
-          <span style="font-size:{TAGLINE_SIZE-3}px; color:{subtext_color()};">{help_text}</span>
+          <span style="font-size:{KPI_HELP_SIZE}px; color:{subtext_color()};">{help_text}</span>
         </div>
         """,
         unsafe_allow_html=True
     )
 
 c1, c2, c3 = st.columns(3)
+
 if df_kpi.empty:
-    with c1: kpi_box("Preço Médio", "—")
-    with c2: kpi_box("Quantidade Média", "—", help_text="—", color_idx=1)
-    with c3: kpi_box("Melhor custo/unid", "—", help_text="—", color_idx=2)
+    with c1: kpi_box("Preço Médio", "—", custom_value_size=60)
+    with c2: kpi_box("Quantidade Média", "—", help_text="—", color_idx=1, custom_value_size=50)
+    with c3: kpi_box("Melhor custo/unid", "—", help_text="—", color_idx=2, custom_value_size=45)
 else:
     preco_med = df_kpi["preco"].mean()
     qtd_med   = df_kpi["quantidade_valor"].dropna().mean()
-    # melhor custo/unidade
+
     df_cost = df_kpi.dropna(subset=["quantidade_valor"]).copy()
     unit = most_common_unit(df_cost)
     if unit is not None:
@@ -144,130 +188,89 @@ else:
         idx = df_cost["custo_por_unid"].idxmin()
         best_cost, best_name = df_cost.loc[idx, "custo_por_unid"], df_cost.loc[idx, "nome"]
 
-    with c1: kpi_box("Preço Médio", brl(preco_med))
-    with c2: kpi_box("Quantidade Média", f"{qtd_med:.2f}" if pd.notna(qtd_med) else "—",
-                     help_text=f"Unidade: {unit or '—'}", color_idx=1)
-    with c3: kpi_box(f"Melhor custo/{unit or '—'}", brl(best_cost), help_text=best_name, color_idx=2)
+    with c1:
+        kpi_box("Preço Médio", brl(preco_med), custom_value_size=30)
+    with c2:
+        kpi_box("Quantidade Média",
+                f"{qtd_med:.2f}" if pd.notna(qtd_med) else "—",
+                help_text=f"Unidade: {unit or '—'}",
+                color_idx=1, custom_value_size=30)
+    with c3:
+        kpi_box(f"Melhor custo/{unit or '—'}", brl(best_cost),
+                help_text=best_name, color_idx=2, custom_value_size=30)
 
-# =========================
-# Top 3 Melhores Ofertas (usa o mesmo filtro dos KPIs)
-# =========================
-st.markdown(f"<h3 style='font-size:{SECTION_TITLE_SIZE}px;margin:1rem 0 .25rem 0;'>⚡ Melhores Ofertas</h3>", unsafe_allow_html=True)
-if df_kpi.empty:
-    st.caption("Sem itens nessa marca+categoria.")
-else:
-    df_cost2 = df_kpi.dropna(subset=["quantidade_valor"]).copy()
-    unit2 = most_common_unit(df_cost2)
-    if unit2 is not None:
-        df_cost2 = df_cost2[df_cost2["quantidade_unidade"] == unit2].copy()
-        if not df_cost2.empty:
-            df_cost2["custo_por_unid"] = df_cost2["preco"] / df_cost2["quantidade_valor"]
-    top = (
-        df_cost2.sort_values("custo_por_unid", ascending=True)
-                .head(3)[["nome","marca","categoria","quantidade","preco","custo_por_unid"]]
-        if not df_cost2.empty else pd.DataFrame()
-    )
-    cols = st.columns(3)
-    if top.empty:
-        st.caption("Sem base suficiente para calcular custo por unidade.")
-    else:
-        for i, (_, r) in enumerate(top.iterrows()):
-            with cols[i]:
-                st.markdown(
-                    f"""
-                    <div style="
-                        border:{KPI_BORDER_PX}px solid {accent(i)};
-                        border-radius:14px; padding:12px 14px; margin-bottom:10px;
-                        background:{panel_bg()}; height:{KPI_CARD_HEIGHT+40}px;">
-                      <div style="font-weight:700; color:{text_color()}; font-size:{TAGLINE_SIZE}px;">{r['nome']}</div>
-                      <div style="font-size:{TAGLINE_SIZE-4}px; color:{subtext_color()}; margin-top:2px;">
-                        {r['marca']} • {r['categoria']} • {r['quantidade']}
-                      </div>
-                      <div style="margin-top:6px; font-weight:800; color:{accent(i)}; font-size:{TAGLINE_SIZE}px;">
-                        {brl(r['custo_por_unid'])}/{unit2 or 'unid'} — {brl(r['preco'])}
-                      </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
 
-# =======================================================
-# GRÁFICO 1 — Dispersão (1 marca obrigatória)
-# =======================================================
+# GRÁFICO — Dispersão (com filtro de categoria MULTI)
+# ======================= GRÁFICO — Dispersão (sem filtrar por unidade) =======================
 st.markdown(f"<h3 style='font-size:{SECTION_TITLE_SIZE}px;margin:1.25rem 0 .25rem 0;'>Relação Preço × Quantidade</h3>", unsafe_allow_html=True)
-brand_scatter = st.selectbox("Marca (Dispersão)", options=brands, index=brands.index(sel_brand_kpi) if sel_brand_kpi in brands else 0)
-df_sc = df[df["marca"] == brand_scatter].dropna(subset=["quantidade_valor"]).copy()
-unit_sc = most_common_unit(df_sc)
-if unit_sc is not None:
-    df_sc = df_sc[df_sc["quantidade_unidade"] == unit_sc]
+
+# Marca 
+brand_scatter_label = st.selectbox(
+    "Marca (Dispersão)",
+    options=BRAND_LABELS,
+    index=BRAND_LABELS.index(sel_brand_label_kpi) if sel_brand_label_kpi in BRAND_LABELS else 0
+)
+brand_scatter_value = LABEL_MAP[brand_scatter_label]
+
+# Categorias 
+if uses_files:
+    df_brand_sc = df[df["_source_file"] == brand_scatter_value].copy()
+else:
+    df_brand_sc = df[df["marca"] == brand_scatter_value].copy()
+
+present_cats_scatter = [c for c in CAT_OPTS if c in df_brand_sc["categoria"].dropna().unique().tolist()]
+default_scatter_cats = present_cats_scatter if present_cats_scatter else CAT_OPTS
+
+sel_cats_scatter = st.multiselect(
+    "Categoria (Dispersão) — múltiplas",
+    options=CAT_OPTS,
+    default=default_scatter_cats
+)
+
+if uses_files:
+    df_sc = df[(df["_source_file"] == brand_scatter_value)].copy()
+else:
+    df_sc = df[(df["marca"] == brand_scatter_value)].copy()
+
+if sel_cats_scatter:
+    df_sc = df_sc[df_sc["categoria"].isin(sel_cats_scatter)]
+
+# Mantém todos os itens e TODAS as unidades; só exige ter quantidade_valor
+df_sc = df_sc.dropna(subset=["quantidade_valor"]).copy()
+
+if not df_sc.empty:
+    df_sc["preco_fmt"] = df_sc["preco"].map(brl)
+
+    df_sc["qtd_fmt"] = [fmt_qtd(v, u) for v, u in zip(df_sc["quantidade_valor"], df_sc["quantidade_unidade"])]
+    customdata_sc = df_sc[["nome", "preco_fmt", "qtd_fmt", "categoria"]].values
 
 if df_sc.empty:
     st.info("Sem dados suficientes para exibir a dispersão.")
 else:
     fig_sc = px.scatter(
         df_sc,
-        x="quantidade_valor", y="preco",
-        color="categoria", color_discrete_sequence=SEQ,
-        hover_data={"nome": True, "categoria": True, "quantidade": True, "preco": ':.2f'},
-        labels={"quantidade_valor": f"Quantidade ({unit_sc})" if unit_sc else "Quantidade", "preco": "Preço (R$)"},
-        title=f"Preço vs. Quantidade — {brand_scatter}"
+        x="quantidade_valor",
+        y="preco",
+        color="categoria",
+        color_discrete_sequence=SEQ,
+        labels={
+            "quantidade_valor": "Quantidade", 
+            "preco": "Preço (R$)"
+        },
+        title=f"Preço vs. Quantidade — {brand_scatter_label}",
+        hover_data={}
     )
-    fig_sc.update_traces(marker=dict(size=SCATTER_MARKER_SIZE, line=dict(width=0)))
-    fig_sc.update_layout(showlegend=True,
-                         legend=dict(font=dict(size=LEGEND_FONT_SIZE, color=text_color())))
+    fig_sc.update_traces(
+        marker=dict(size=SCATTER_MARKER_SIZE, line=dict(width=0)),
+        customdata=customdata_sc,
+        hovertemplate="<b>%{customdata[0]}</b><br>Preço: %{customdata[1]}<br>Quantidade: %{customdata[2]}<br>Categoria: %{customdata[3]}<extra></extra>"
+    )
+    fig_sc.update_layout(
+        showlegend=True,
+        title_font_size=32,
+        title_font_color=text_color(),
+        legend=dict(font=dict(size=LEGEND_FONT_SIZE, color=text_color())),
+        hoverlabel=dict(font_size=28, font_color="gray")
+    )
     style_axes(fig_sc, height=CHART_HEIGHT)
     st.plotly_chart(fig_sc, use_container_width=True)
-
-# =======================================================
-# GRÁFICO 2 — Preço médio por Categoria (1 marca) + seleção de categorias
-# =======================================================
-st.markdown(f"<h3 style='font-size:{SECTION_TITLE_SIZE}px;margin:1rem 0 .25rem 0;'>Preço médio por Categoria (por marca)</h3>", unsafe_allow_html=True)
-brand_bycat = st.selectbox("Marca (Preço por Categoria)", options=brands, index=brands.index(sel_brand_kpi) if sel_brand_kpi in brands else 0)
-df_bc_all = df[df["marca"] == brand_bycat].copy()
-cats_brand = sorted(df_bc_all["categoria"].dropna().unique().tolist())
-sel_cats_bc = st.multiselect("Categorias a exibir", options=cats_brand, default=cats_brand)
-
-df_bc = df_bc_all[df_bc_all["categoria"].isin(sel_cats_bc)]
-if df_bc.empty:
-    st.info("Sem dados para os filtros atuais.")
-else:
-    by_cat = df_bc.groupby("categoria", as_index=False)["preco"].mean().rename(columns={"preco":"preco_medio"})
-    fig_bcat = px.bar(
-        by_cat.sort_values("preco_medio", ascending=False),
-        x="categoria", y="preco_medio",
-        color="categoria", color_discrete_sequence=SEQ,
-        labels={"categoria":"Categoria", "preco_medio":"Preço médio (R$)"},
-        title=f"Preço médio por Categoria — {brand_bycat}"
-    )
-    fig_bcat.update_traces(texttemplate="%{y:.2f}", textposition="outside")
-    fig_bcat.update_layout(showlegend=False, xaxis_tickangle=-20,
-                           legend=dict(font=dict(size=LEGEND_FONT_SIZE, color=text_color())))
-    style_axes(fig_bcat, height=CHART_HEIGHT)
-    st.plotly_chart(fig_bcat, use_container_width=True)
-
-# =======================================================
-# GRÁFICO 3 — Preço médio por Marca (1 categoria) + seleção de marcas
-# =======================================================
-st.markdown(f"<h3 style='font-size:{SECTION_TITLE_SIZE}px;margin:1rem 0 .25rem 0;'>Preço médio por Marca (por categoria)</h3>", unsafe_allow_html=True)
-cat_bybrand = st.selectbox("Categoria (Preço por Marca)", options=cats, index=cats.index(sel_cat_kpi) if sel_cat_kpi in cats else 0)
-df_bb_all = df[df["categoria"] == cat_bybrand].copy()
-brands_cat = sorted(df_bb_all["marca"].dropna().unique().tolist())
-sel_brands_bb = st.multiselect("Marcas a exibir", options=brands_cat, default=brands_cat)
-
-df_bb = df_bb_all[df_bb_all["marca"].isin(sel_brands_bb)]
-if df_bb.empty:
-    st.info("Sem dados para os filtros atuais.")
-else:
-    by_brand = df_bb.groupby("marca", as_index=False)["preco"].mean().rename(columns={"preco":"preco_medio"})
-    fig_bbrand = px.bar(
-        by_brand.sort_values("preco_medio", ascending=False),
-        x="marca", y="preco_medio",
-        color="marca", color_discrete_sequence=SEQ,
-        labels={"marca":"Marca", "preco_medio":"Preço médio (R$)"},
-        title=f"Preço médio por Marca — {cat_bybrand}"
-    )
-    fig_bbrand.update_traces(texttemplate="%{y:.2f}", textposition="outside")
-    fig_bbrand.update_layout(showlegend=False, xaxis_tickangle=-20,
-                             legend=dict(font=dict(size=LEGEND_FONT_SIZE, color=text_color())))
-    style_axes(fig_bbrand, height=CHART_HEIGHT)
-    st.plotly_chart(fig_bbrand, use_container_width=True)
