@@ -3,7 +3,7 @@ SKIN_TYPE_SYNONYMS_PT = {
         "oleosa", "oleosidade", "óleo", "brilho excessivo",
         "sebosa", "seborreica", "com excesso de óleo", "brilhante",
         "cútis oleosa", "pele brilhante", "pele gordurosa", "gordurosa",
-        "cútis seborreica", "pele com brilho", "brilho na testa/nariz"
+        "cútis seborreica", "pele com brilho",
     ],
 
     "seca": [
@@ -14,13 +14,12 @@ SKIN_TYPE_SYNONYMS_PT = {
     ],
 
     "mista": [
-        "mista", "zona t", "zona-t", "oleosa na zona t", "seca nas bochechas",
-        "pele mista", "zona t oleosa", "bochechas secas", "equilíbrio irregular",
-        "pele combinada", "cútis mista", "oleosidade localizada"
+        "mista", "pele mista", "equilíbrio irregular",
+        "pele combinada", "cútis mista"
     ],
 
     "normal": [
-        "normal", "equilibrada", "equilíbrio", "sem excesso de óleo", "saudável",
+        "normal", "equilibrada", "equilíbrio", "saudável",
         "pele saudável", "sem problemas", "ideal", "cútis normal",
         "pele perfeita", "sem ressecamento nem brilho", "balanceada"
     ],
@@ -33,10 +32,10 @@ SKIN_TYPE_SYNONYMS_PT = {
     ],
 
     "sensivel": [
-        "sensível", "facilmente irritada", "vermelhidão", "hipersensível",
+        "sensível", "facilmente irritada", "irritada", "irritação", "vermelhidão", "hipersensível",
         "pele delicada", "reativa", "com ardência", "com coceira",
         "cútis sensível", "intolerante", "pele que puxa", "pele fina",
-        "pele reativa", "alérgica", "com queimação"
+        "pele reativa", "alérgica", "com queimação", "sensivel"
     ],
 
     "madura": [
@@ -48,20 +47,20 @@ SKIN_TYPE_SYNONYMS_PT = {
 
     "com manchas": [
         "mancha", "manchas", "hiperpigment", "melasma",
-        "desuniforme", "desigual", "manchas escuras", "manchas solares",
+        "desigual", "manchas escuras", "manchas solares",
         "sardas", "hiperpigmentação", "cútis manchada", "tonalidade irregular",
         "manchas de idade", "manchas hormonais", "pele manchada"
     ],
 
     "desidratada": [
-        "desidratada", "sem água", "falta de água", "ressecada mas oleosa",
+        "desidratada", "sem água", "falta de água", "ressecada",
         "pele apertada", "sensação de repuxamento", "pele que puxa",
-        "cútis desidratada", "falta de hidratação", "água insuficiente na pele"
+        "cútis desidratada", "falta de hidratação", "água insuficiente na pele", "desidratação"
     ],
 
     "com poros dilatados": [
         "poros dilatados", "poros abertos", "poros visíveis", "pele com poros",
-        "cútis com poros", "poros largos", "pele texturizada", "aspecto de casca de laranja",
+        "cútis com poros", "poros largos", "pele texturizada",
         "pele com cravos abertos", "poros entupidos", "pele não refinada"
     ],
 
@@ -73,7 +72,7 @@ SKIN_TYPE_SYNONYMS_PT = {
 
     "reativa": [
         "reativa", "pele reativa", "cútis reativa", "responde mal a produtos",
-        "pele instável", "pele que reage", "alergia frequente", "intolerante a cosméticos"
+        "pele instável", "pele que reage", "alergia frequente", "intolerante a cosméticos", "alergica", "alergias"
     ],
 
     "com flacidez": [
@@ -83,21 +82,21 @@ SKIN_TYPE_SYNONYMS_PT = {
     ],
 
     "com celulite": [
-        "celulite", "estrias", "pele com celulite", "casca de laranja",
+        "celulite", "estrias", "pele com celulite",
         "ondulada", "pele com estrias", "marcas brancas", "marcas roxas",
-        "cútis com celulite", "pele com depressões"
+        "cútis com celulite"
     ],
 
     "com olheiras": [
         "olheiras", "bolsas nos olhos", "inchaço ocular", "pele cansada",
         "olhos fundos", "manchas nos olhos", "pele sob os olhos escura",
-        "cútis periorbital cansada", "círculos escuros", "olheiras profundas"
+        "cútis periorbital cansada", "círculos escuros", "olheiras profundas", "cansaço nos olhos", "cansada"
     ],
 
     "com cicatrizes": [
         "cicatrizes", "marcas de acne", "marcas", "pele marcada",
-        "cútis com cicatrizes", "crateras", "pele com depressões",
-        "sequelas de acne", "marcas pós-acne", "pele com textura irregular"
+        "cútis com cicatrizes", "crateras",
+        "sequelas de acne", "marcas pós-acne", "pele com textura irregular", "machucada"
     ],
 
     "com espinhas ativas": [
@@ -113,7 +112,7 @@ SKIN_TYPE_SYNONYMS_PT = {
     ],
 
     "opaca": [
-        "opaca", "sem viço", "sem brilho (doente)", "cansada",
+        "opaca", "sem viço", "sem brilho (doente)",
         "pele sem vida", "cútis opaca", "sem luminosidade", "aspecto cinza",
         "pele sem energia", "pele sem glow"
     ],
@@ -121,36 +120,30 @@ SKIN_TYPE_SYNONYMS_PT = {
     "todos os tipos": [
         "todos os tipos", "qualquer tipo de pele", "todas as peles",
         "independente do tipo", "todas", "universal", "para todas as peles",
-        "pele de qualquer tipo", "indiferente ao tipo de pele"
+        "pele de qualquer tipo", "indiferente ao tipo de pele", "todos", "indicado para todas as peles", "indicado para todo tipo de pele"
     ],
 }
 
 SKIN_TYPE_CANONICAL_ORDER = [
 
-    "oleosa",
-    "seca",
-    "mista",
-    "normal",
-
     "acneica",
-    "sensivel",
+    "com cicatrizes",
+    "com celulite",
+    "com espinhas ativas",
+    "com flacidez",
+    "com manchas",
+    "com olheiras",
+    "com poros dilatados",
+    "com rosacea",
     "desidratada",
     "madura",
-    "com flacidez",
-
-    "com manchas",
-    "com poros dilatados",
-    "com cicatrizes",
-
-    "com rosacea",
-    "reativa",
-    "com espinhas ativas",
-
-    "com olheiras",
-    "com celulite",
-
+    "mista",
+    "normal",
+    "oleosa",
     "opaca",
+    "seca",
+    "sensível",
     "radiante",
-
+    "reativa",
     "todos os tipos",
 ]
