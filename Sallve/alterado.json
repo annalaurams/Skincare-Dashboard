@@ -66,7 +66,7 @@
     "categoria": "em pó",
     "quantidade": "30g",
     "preco": "79.90",
-    "beneficios": "anticravos; anti-ressecamento; controle da oleosidade; esfoliação; hidratação; limpeza; luminosidade/viço; resultados rápidos",
+    "beneficios": "anticravos; anti-ressecamento; controle da oleosidade; esfoliação; limpeza",
     "ingredientes": "papína; argila branca",
     "tipo_pele": "acneica; oleosa; seca",
     "imagem": "limpador-enzimatico-em-po.png"
@@ -90,7 +90,7 @@
     "categoria": "sérum",
     "quantidade": "15g",
     "preco": "99.90",
-    "beneficios": "anti-inchaço nos olhos; antissinais; compatível com maquiagem; resultados rápidos",
+    "beneficios": "anti-inchaço nos olhos; antissinais; compatível com maquiagem ",
     "ingredientes": "peptídeo antiolheiras; cafeína; ácido tranexâmico; glutationa",
     "tipo_pele": "com olheiras; madura",
     "imagem": "serum-antiolheiras.png"
@@ -150,7 +150,7 @@
     "categoria": "sérum",
     "quantidade": "30g",
     "preco": "99.90",
-    "beneficios": "antissinais; colágeno; esfoliação; luminosidade/viço; rugas profundas; uniformiza o tom/antimanchas",
+    "beneficios": "antissinais; colágeno; luminosidade/viço; rugas profundas; uniformiza o tom/antimanchas",
     "ingredientes": "retinol; peptídeo de cobre; niacinamida; ácido hialurônico",
     "tipo_pele": "com manchas; madura",
     "imagem": "serum-antissinais-retinol-puro-0-3.png"
@@ -246,7 +246,7 @@
     "categoria": "tônico",
     "quantidade": "120ml",
     "preco": "69.90",
-    "beneficios": "acalma/anti-vermelhidão; antiacne; anti-ressecamento; controle da oleosidade; minimiza poros; suaviza marcas; uniformiza o tom/antimanchas",
+    "beneficios": "acalma/anti-vermelhidão; antiacne; controle da oleosidade; minimiza poros; suaviza marcas",
     "ingredientes": "melaleuca; centella-asiática; niacinamida",
     "tipo_pele": "acneica; com cicatrizes; com manchas; oleosa; seca; sensivel",
     "imagem": "tonico-antiacne.png"
@@ -366,7 +366,7 @@
     "categoria": "tônico",
     "quantidade": "120ml",
     "preco": "74.90",
-    "beneficios": "antiacne; anticravos; anti-ressecamento; antissinais; controle da oleosidade; esfoliação; luminosidade/viço; suaviza marcas; uniformiza o tom/antimanchas",
+    "beneficios": "antiacne; anticravos; anti-ressecamento; antissinais; controle da oleosidade; luminosidade/viço; uniformiza o tom/antimanchas",
     "ingredientes": "ácido glicólico; ácido málico; ácido lático",
     "tipo_pele": "acneica; com cicatrizes; com manchas; madura; oleosa; seca",
     "imagem": "tonico-renovador.jpg"

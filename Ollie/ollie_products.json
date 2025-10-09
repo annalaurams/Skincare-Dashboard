@@ -1,0 +1,122 @@
+[
+  {
+    "marca": "ollie",
+    "nome": "Protetor Solar em Bastão Com Cor FPS 95",
+    "subtitulo": null,
+    "categoria": "bastão",
+    "quantidade": "",
+    "preco": "139.00",
+    "ingredientes": "ácido hialurônico; fenoxietanol; glicerina; hialuronato de sódio; palmitato de ascorbila; silica; sílica; tocopherol; vitamina e",
+    "beneficios": "antiacne; antioxidante; antissinais; colágeno; controle da oleosidade; hidratação; limpeza; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "acneica; com manchas; oleosa; todos os tipos",
+    "imagem": "protetorsolarembastao_10_still_02.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Bastão 3 em 1 - Blush, Batom e Sombra FPS 95",
+    "subtitulo": null,
+    "categoria": "bastão",
+    "quantidade": "",
+    "preco": "99.00",
+    "ingredientes": "ácido hialurônico; fenoxietanol; glicerina; hialuronato de sódio; palmitato de ascorbila; silica; sílica; tocopherol; vitamina c; vitamina e",
+    "beneficios": "acalma/anti-vermelhidão; antiacne; antioxidante; antissinais; colágeno; controle da oleosidade; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "acneica; com manchas; oleosa; todos os tipos",
+    "imagem": "3em1_rosa_still_02.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Protetor Solar em Bastão Incolor FPS 95",
+    "subtitulo": null,
+    "categoria": "bastão",
+    "quantidade": "",
+    "preco": "109.00",
+    "ingredientes": "ácido hialurônico; vitamina c; vitamina e",
+    "beneficios": "antiacne; antioxidante; anti-ressecamento; antissinais; colágeno; controle da oleosidade; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "seca; todos os tipos",
+    "imagem": "protetor_bastao_still_02.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Protetor Solar Infantil em Bastão Mineral FPS 80 FPUVA 30",
+    "subtitulo": null,
+    "categoria": "bastão",
+    "quantidade": "",
+    "preco": "119.00",
+    "ingredientes": "vitamina e; zinco",
+    "beneficios": "acalma/anti-vermelhidão; antioxidante; controle da oleosidade; hidratação; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "todos os tipos",
+    "imagem": "kids_still_01_v3_002.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Protetor Solar Mineral Fluido FPS 50 FPUVA 16",
+    "subtitulo": null,
+    "categoria": "protetor solar",
+    "quantidade": "",
+    "preco": "99.00",
+    "ingredientes": "esqualano; niacinamida; zinco",
+    "beneficios": "acalma/anti-vermelhidão; antiacne; antioxidante; anti-ressecamento; compatível com maquiagem; colágeno; controle da oleosidade; fortalece a barreira; hidratação; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "oleosa; todos os tipos",
+    "imagem": "protetor_mineral_produto_caixa.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Creme Hidratante para Mãos FPS 60 FPUVA 22",
+    "subtitulo": null,
+    "categoria": "hidratante",
+    "quantidade": "",
+    "preco": "59.00",
+    "ingredientes": "manteiga de karité; niacinamida",
+    "beneficios": "antiacne; anti-inchaço nos olhos; antioxidante; anti-ressecamento; antissinais; compatível com maquiagem; colágeno; controle da oleosidade; hidratação; luminosidade/viço; proteção solar; resultados rápidos; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "desidratada; normal; seca; reativa; todos os tipos",
+    "imagem": "carrossel_3d_sweety.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Hidratante Labial com FPS 50",
+    "subtitulo": null,
+    "categoria": "hidratante",
+    "quantidade": "",
+    "preco": "39.00",
+    "ingredientes": "ácido hialurônico; esqualano; manteiga de karité; vitamina e",
+    "beneficios": "acalma/anti-vermelhidão; antioxidante; anti-ressecamento; colágeno; controle da oleosidade; hidratação; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "seca; todos os tipos",
+    "imagem": "hidratante_labial_still_02.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Glow Hidratante Facial FPS50",
+    "subtitulo": null,
+    "categoria": "hidratante",
+    "quantidade": "",
+    "preco": "139.00",
+    "ingredientes": "peptídeos",
+    "beneficios": "luminosidade/viço",
+    "tipo_pele": "mista; oleosa; seca",
+    "imagem": "still-glow-hidratante-facial.webp"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Pó Translúcido Facial FPS 30",
+    "subtitulo": null,
+    "categoria": "protetor solar",
+    "quantidade": "",
+    "preco": "119.00",
+    "ingredientes": "silica; sílica",
+    "beneficios": "acalma/anti-vermelhidão; antiacne; anti-ressecamento; compatível com maquiagem; controle da oleosidade; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "acneica; com manchas; oleosa; todos os tipos",
+    "imagem": "po_translucido_01.jpg"
+  },
+  {
+    "marca": "ollie",
+    "nome": "Protetor Solar Transparente Aveludado FPS 40",
+    "subtitulo": null,
+    "categoria": "protetor solar",
+    "quantidade": "",
+    "preco": "99.00",
+    "ingredientes": "silica; sílica; vitamina e",
+    "beneficios": "antiacne; antioxidante; compatível com maquiagem; colágeno; controle da oleosidade; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
+    "tipo_pele": "acneica; mista; oleosa; seca; todos os tipos",
+    "imagem": "protetor_still_02_jpeg.jpg"
+  }
+]
