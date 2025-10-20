@@ -125,16 +125,25 @@ SKIN_TYPE_SYNONYMS_PT = {
 }
 
 SKIN_TYPE_CANONICAL_ORDER = [
+
     "acneica",
     "com cicatrizes",
+    "com celulite",
+    "com espinhas ativas",
+    "com flacidez",
     "com manchas",
     "com olheiras",
     "com poros dilatados",
+    "com rosacea",
+    "desidratada",
     "madura",
     "mista",
     "normal",
     "oleosa",
+    "opaca",
     "seca",
     "sensível",
+    "radiante",
+    "reativa",
     "todos os tipos",
 ]

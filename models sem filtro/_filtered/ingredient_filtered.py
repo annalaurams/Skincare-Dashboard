@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+AUTO-GERADO: ingredientes filtrados.
+"""
+
 INGREDIENTES_VALIDOS = [
     "ácido cítrico",
     "ácido fítico",

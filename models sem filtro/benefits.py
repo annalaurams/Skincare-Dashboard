@@ -150,6 +150,7 @@ BENEFIT_SYNONYMS_PT = {
         "antiqueda", "reduz a queda", "queda dos fios", "queda capilar", "menos queda"
     ],
 }
+
 BENEFIT_CANONICAL_ORDER = [
     "acalma/anti-vermelhidão",
     "antiacne",
@@ -164,6 +165,7 @@ BENEFIT_CANONICAL_ORDER = [
     "crescimento de cílios/sobrancelhas",
     "colágeno",
     "controle da oleosidade",
+    "controle de brilho imediato",
     "desobstrui poros",
     "esfoliação",
     "fortalece a barreira",
