@@ -66,8 +66,8 @@
     "categoria": "em pó",
     "quantidade": "30g",
     "preco": "79.90",
-    "beneficios": "anticravos; anti-ressecamento; controle da oleosidade; esfoliação; hidratação; limpeza; luminosidade/viço; resultados rápidos",
-    "ingredientes": "papaína; argila branca",
+    "beneficios": "anticravos; anti-ressecamento; controle da oleosidade; esfoliação; limpeza",
+    "ingredientes": "papína; argila branca",
     "tipo_pele": "acneica; oleosa; seca",
     "imagem": "limpador-enzimatico-em-po.png"
   },
@@ -90,8 +90,8 @@
     "categoria": "sérum",
     "quantidade": "15g",
     "preco": "99.90",
-    "beneficios": "anti-inchaço nos olhos; antissinais; compatível com maquiagem; resultados rápidos",
-    "ingredientes": "peptídeo; cafeína; ácido tranexâmico; glutationa",
+    "beneficios": "anti-inchaço nos olhos; antissinais; compatível com maquiagem ",
+    "ingredientes": "peptídeo antiolheiras; cafeína; ácido tranexâmico; glutationa",
     "tipo_pele": "com olheiras; madura",
     "imagem": "serum-antiolheiras.png"
   },
@@ -127,7 +127,7 @@
     "quantidade": "30ml",
     "preco": "64.90",
     "beneficios": "fortalece a barreira; uniformiza o tom/antimanchas",
-    "ingredientes": "niacinamida; peptídeo; ácido tranexâmico; ácido mandélico; ácido kójico",
+    "ingredientes": "niacinamida; peptídeo uniformizador; ácido tranexâmico; ácido mandélico; ácido kójico",
     "tipo_pele": "todos os tipos",
     "imagem": "super-niacinamida-20.png"
   },
@@ -139,7 +139,7 @@
     "quantidade": "30ml",
     "preco": "89.90",
     "beneficios": "colágeno",
-    "ingredientes": "peptídeos; peptídeo; ácido hialurônico; carnosina",
+    "ingredientes": "peptídeos matrixyl; peptídeo de cobre; ácido hialurônico; carnosina",
     "tipo_pele": "todos os tipos",
     "imagem": "super-pro-colageno-10.png"
   },
@@ -150,8 +150,8 @@
     "categoria": "sérum",
     "quantidade": "30g",
     "preco": "99.90",
-    "beneficios": "antissinais; colágeno; esfoliação; luminosidade/viço; rugas profundas; uniformiza o tom/antimanchas",
-    "ingredientes": "retinol; peptídeo; niacinamida; ácido hialurônico",
+    "beneficios": "antissinais; colágeno; luminosidade/viço; rugas profundas; uniformiza o tom/antimanchas",
+    "ingredientes": "retinol; peptídeo de cobre; niacinamida; ácido hialurônico",
     "tipo_pele": "com manchas; madura",
     "imagem": "serum-antissinais-retinol-puro-0-3.png"
   },
@@ -166,6 +166,18 @@
     "ingredientes": "ácido hialurônico; pantenol",
     "tipo_pele": "madura; oleosa",
     "imagem": "acido-hialuronico-hidratante-firmador.jpg"
+  },
+  {
+    "marca": "sallve",
+    "nome": "Vitamina C Antioxidante Hidratante",
+    "subtitulo": null,
+    "categoria": "hidratante",
+    "quantidade": "35g",
+    "preco": "99.90",
+    "beneficios": "anticravos; anti-inchaço nos olhos; antiolheiras (vasculares/pigmentares); antissinais; luminosidade/viço; uniformiza o tom/antimanchas",
+    "ingredientes": "vitamina c; ácido hialurônico; vitamina e; resveratrol; cafeína; niacinamida; carnosina",
+    "tipo_pele": "acneica; com manchas; com olheiras; madura",
+    "imagem": "vitamina-c-antioxidante-hidratante.jpg"
   },
   {
     "marca": "sallve",
@@ -234,7 +246,7 @@
     "categoria": "tônico",
     "quantidade": "120ml",
     "preco": "69.90",
-    "beneficios": "acalma/anti-vermelhidão; antiacne; anti-ressecamento; controle da oleosidade; minimiza poros; suaviza marcas; uniformiza o tom/antimanchas",
+    "beneficios": "acalma/anti-vermelhidão; antiacne; controle da oleosidade; minimiza poros; suaviza marcas",
     "ingredientes": "melaleuca; centella-asiática; niacinamida",
     "tipo_pele": "acneica; com cicatrizes; com manchas; oleosa; seca; sensivel",
     "imagem": "tonico-antiacne.png"
@@ -247,7 +259,7 @@
     "quantidade": "30ml",
     "preco": "69.90",
     "beneficios": "acalma/anti-vermelhidão; antissinais; colágeno; luminosidade/viço; uniformiza o tom/antimanchas",
-    "ingredientes": "vitamina c; peptídeo; ácido maltobiônico; ácido lático; ácido fítico",
+    "ingredientes": "vitamina c; peptídeo antioxidante; ácido maltobiônico; ácido lático; ácido fítico",
     "tipo_pele": "com manchas; madura; mista; normal; oleosa; seca; sensivel",
     "imagem": "super-vitamina-c-20.png"
   },
@@ -301,25 +313,13 @@
   },
   {
     "marca": "sallve",
-    "nome": "vitamina c + ácido hialurônico + retinol puro",
-    "subtitulo": null,
-    "categoria": "sérum",
-    "quantidade": "30 g",
-    "preco": "139.80",
-    "beneficios": "acalma/anti-vermelhidão; antiacne; anticravos; anti-inchaço nos olhos; antiolheiras (vasculares/pigmentares); antioxidante; anti-ressecamento; antissinais; colágeno; controle da oleosidade; esfoliação; hidratação; limpeza; luminosidade/viço; proteção solar; rugas profundas; uniformiza o tom/antimanchas",
-    "ingredientes": "",
-    "tipo_pele": "acneica; com manchas; com olheiras; madura; oleosa; seca; sensivel",
-    "imagem": "vitamina-c-acido-hialuronico-retinol-puro.png"
-  },
-  {
-    "marca": "sallve",
     "nome": "Esfoliante enzimático",
     "subtitulo": null,
     "categoria": "esfoliante",
     "quantidade": "70g",
     "preco": "74.90",
     "beneficios": "anticravos; uniformiza o tom/antimanchas",
-    "ingredientes": "",
+    "ingredientes": "ômegas; enzimas de româ; bambu ",
     "tipo_pele": "acneica; com manchas",
     "imagem": "esfoliante-enzimatico.png"
   },
@@ -355,7 +355,7 @@
     "quantidade": "30ml",
     "preco": "59.90",
     "beneficios": "acalma/anti-vermelhidão; antiacne; anticravos; suaviza marcas; uniformiza o tom/antimanchas",
-    "ingredientes": "ácido salicílico; peptídeo; ácido mandélico; zinco",
+    "ingredientes": "ácido salicílico; peptídeo antiacne; ácido mandélico; zinco",
     "tipo_pele": "acneica; com cicatrizes; com manchas; mista; normal; oleosa; seca; sensivel",
     "imagem": "super-acido-salicilico-2.png"
   },
@@ -366,7 +366,7 @@
     "categoria": "tônico",
     "quantidade": "120ml",
     "preco": "74.90",
-    "beneficios": "antiacne; anticravos; anti-ressecamento; antissinais; controle da oleosidade; esfoliação; luminosidade/viço; suaviza marcas; uniformiza o tom/antimanchas",
+    "beneficios": "antiacne; anticravos; anti-ressecamento; antissinais; controle da oleosidade; luminosidade/viço; uniformiza o tom/antimanchas",
     "ingredientes": "ácido glicólico; ácido málico; ácido lático",
     "tipo_pele": "acneica; com cicatrizes; com manchas; madura; oleosa; seca",
     "imagem": "tonico-renovador.jpg"
@@ -382,18 +382,6 @@
     "ingredientes": "pantenol; esqualano; bisabolol",
     "tipo_pele": "sensivel",
     "imagem": "spray-reparador-calmante.png"
-  },
-  {
-    "marca": "sallve",
-    "nome": "vitamina c + ácido salicílico",
-    "subtitulo": null,
-    "categoria": "sérum",
-    "quantidade": "35 g",
-    "preco": "104.80",
-    "beneficios": "acalma/anti-vermelhidão; antiacne; anticravos; anti-inchaço nos olhos; antiolheiras (vasculares/pigmentares); antioxidante; anti-ressecamento; antissinais; colágeno; controle da oleosidade; esfoliação; hidratação; limpeza; luminosidade/viço; proteção solar; resultados rápidos; rugas profundas; suaviza marcas; uniformiza o tom/antimanchas",
-    "ingredientes": "",
-    "tipo_pele": "acneica; com cicatrizes; com manchas; com olheiras; madura; oleosa; seca; sensivel",
-    "imagem": "vitamina-c-acido-salicilico.png"
   },
   {
     "marca": "sallve",
