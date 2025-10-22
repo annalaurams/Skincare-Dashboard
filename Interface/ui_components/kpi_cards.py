@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 # caminho para os modelos (listas canônicas)
-sys.path.append("/home/usuario/Área de trabalho/Dados/models")
+sys.path.append("./../models")
 from ingredient import INGREDIENTES_VALIDOS
 from benefits import BENEFIT_CANONICAL_ORDER
 from category import CATEGORY_CANONICAL_ORDER

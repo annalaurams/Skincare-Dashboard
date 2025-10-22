@@ -47,9 +47,7 @@ def text_color() -> str:       return "#262730"
 def subtext_color() -> str:    return "#555"
 def panel_bg() -> str:         return "#ffffff"
 
-
 def _pretty_from_source(fname: str) -> str:
-
     stem = Path(fname).stem
     for suf in ["_products", "_skincare", "_cosmetics", "_dados"]:
         stem = stem.replace(suf, "")
@@ -92,11 +90,64 @@ def style_axes(fig, height: int = CHART_HEIGHT):
     )
     return fig
 
+# =======================
+# Conversão g ↔ mL (densidade estimada por categoria)
+# =======================
+DENSIDADE_PADRAO = {
+    "sérum": 0.95, "serum": 0.95,
+    "hidratante": 1.05,
+    "creme": 1.10,
+    "manteiga": 1.15,
+    "óleo": 0.90, "oleo": 0.90,
+    "_default": 1.00
+}
 
+def _match_density_key(texto: str) -> float:
+    t = (texto or "").lower()
+    for k, v in DENSIDADE_PADRAO.items():
+        if k == "_default":
+            continue
+        if k in t:
+            return v
+    return DENSIDADE_PADRAO["_default"]
+
+def get_densidade(row):
+    # usa a categoria como heurística
+    return _match_density_key(str(row.get("categoria", "")))
+
+def to_grams(valor, unidade, densidade):
+    if pd.isna(valor):
+        return np.nan
+    u = (str(unidade) if unidade is not None else "").strip().lower()
+    if u in ["g", "grama", "gramas"]:
+        return float(valor)
+    if u in ["ml", "ml", "mililitro", "mililitros"]:
+        return float(valor) * float(densidade or 1.0)
+    return np.nan
+
+def to_milliliters(valor, unidade, densidade):
+    if pd.isna(valor):
+        return np.nan
+    u = (str(unidade) if unidade is not None else "").strip().lower()
+    if u in ["ml", "ml", "mililitro", "mililitros"]:
+        return float(valor)
+    if u in ["g", "grama", "gramas"]:
+        d = float(densidade or 0.0)
+        return float(valor) / d if d > 0 else np.nan
+    return np.nan
+
+# =======================
+# Carregamento de dados
+# =======================
 df = load_data()  
 
-# Preparação de listas (mesma lógica da tela principal)
+# Adiciona estimativa de densidade e colunas convertidas
+if not df.empty:
+    df["densidade_est"] = df.apply(get_densidade, axis=1)
+    df["qtd_g"]  = df.apply(lambda r: to_grams(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("densidade_est")), axis=1)
+    df["qtd_ml"] = df.apply(lambda r: to_milliliters(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("densidade_est")), axis=1)
 
+# Preparação de listas (mesma lógica da tela principal)
 uses_files = "_source_file" in df.columns and df["_source_file"].notna().any()
 
 if uses_files:
@@ -104,7 +155,6 @@ if uses_files:
     LABEL_MAP = { _pretty_from_source(f): f for f in files }  
     BRAND_LABELS = list(LABEL_MAP.keys())  
 else:
-   
     brands_col = sorted(df["marca"].dropna().unique().tolist()) if "marca" in df.columns else []
     LABEL_MAP = { b: b for b in brands_col } 
     BRAND_LABELS = list(LABEL_MAP.keys())
@@ -112,7 +162,6 @@ else:
 CAT_OPTS = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else sorted(df["categoria"].dropna().unique().tolist())
 
 # Título + Tagline
-
 st.markdown(
     f"<h1 style='margin:0;color:{accent(0)};font-size:{TITLE_SIZE}px'>{TITLE_TEXT}</h1>",
     unsafe_allow_html=True,
@@ -123,7 +172,6 @@ st.markdown(
 )
 
 # FILTROS (OBRIGATÓRIOS) — KPIs
-
 st.markdown(f"<h3 style='font-size:32px;margin:.75rem 0 .5rem 0;'>Filtros</h3>", unsafe_allow_html=True)
 
 # Marca 
@@ -140,14 +188,12 @@ default_cat_index = CAT_OPTS.index(default_cat_for_brand) if (default_cat_for_br
 
 sel_cat_kpi = st.selectbox("Categoria (KPIs / Ofertas)", options=CAT_OPTS, index=default_cat_index)
 
-
 if uses_files:
     df_kpi = df[(df["_source_file"] == sel_brand_value_kpi) & (df["categoria"] == sel_cat_kpi)].copy()
 else:
     df_kpi = df[(df["marca"] == sel_brand_value_kpi) & (df["categoria"] == sel_cat_kpi)].copy()
 
 #  preço médio, quantidade média, melhor custo
-
 def kpi_box(title: str, value: str, help_text: str = "", color_idx: int = 0, custom_value_size: int = None):
     value_size = custom_value_size if custom_value_size is not None else KPI_VALUE_SIZE
     st.markdown(
@@ -170,7 +216,7 @@ c1, c2, c3 = st.columns(3)
 
 if df_kpi.empty:
     with c1: kpi_box("Preço Médio", "—", custom_value_size=60)
-    with c2: kpi_box("Quantidade Média", "—", help_text="—", color_idx=1, custom_value_size=50)
+    with c2: kpi_box("Quantidade Médio", "—", help_text="—", color_idx=1, custom_value_size=50)
     with c3: kpi_box("Melhor custo/unid", "—", help_text="—", color_idx=2, custom_value_size=45)
 else:
     preco_med = df_kpi["preco"].mean()
@@ -199,9 +245,7 @@ else:
         kpi_box(f"Melhor custo/{unit or '—'}", brl(best_cost),
                 help_text=best_name, color_idx=2, custom_value_size=30)
 
-
-# GRÁFICO — Dispersão (com filtro de categoria MULTI)
-# ======================= GRÁFICO — Dispersão (sem filtrar por unidade) =======================
+# ======================= GRÁFICO — Dispersão (com seletor de unidade g/mL) =======================
 st.markdown(f"<h3 style='font-size:{SECTION_TITLE_SIZE}px;margin:1.25rem 0 .25rem 0;'>Relação Preço × Quantidade</h3>", unsafe_allow_html=True)
 
 # Marca 
@@ -227,6 +271,9 @@ sel_cats_scatter = st.multiselect(
     default=default_scatter_cats
 )
 
+# Seletor de unidade para o eixo X (quantidade)
+unidade_plot = st.radio("Unidade para visualização", ["g", "mL"], horizontal=True)
+
 if uses_files:
     df_sc = df[(df["_source_file"] == brand_scatter_value)].copy()
 else:
@@ -235,26 +282,31 @@ else:
 if sel_cats_scatter:
     df_sc = df_sc[df_sc["categoria"].isin(sel_cats_scatter)]
 
-# Mantém todos os itens e TODAS as unidades; só exige ter quantidade_valor
-df_sc = df_sc.dropna(subset=["quantidade_valor"]).copy()
+# Seleciona a coluna de quantidade convertida conforme a unidade escolhida
+col_qtd = "qtd_g" if unidade_plot == "g" else "qtd_ml"
 
-if not df_sc.empty:
-    df_sc["preco_fmt"] = df_sc["preco"].map(brl)
-
-    df_sc["qtd_fmt"] = [fmt_qtd(v, u) for v, u in zip(df_sc["quantidade_valor"], df_sc["quantidade_unidade"])]
-    customdata_sc = df_sc[["nome", "preco_fmt", "qtd_fmt", "categoria"]].values
+# Mantém todos os itens; exige ter a quantidade convertida selecionada
+df_sc = df_sc.dropna(subset=[col_qtd, "preco"]).copy()
 
 if df_sc.empty:
     st.info("Sem dados suficientes para exibir a dispersão.")
 else:
+    df_sc["preco_fmt"] = df_sc["preco"].map(brl)
+    df_sc["qtd_fmt_origem"] = [fmt_qtd(v, u) for v, u in zip(df_sc.get("quantidade_valor"), df_sc.get("quantidade_unidade"))]
+    # formata a quantidade na unidade escolhida
+    df_sc["qtd_plot"] = df_sc[col_qtd].astype(float)
+    df_sc["qtd_plot_fmt"] = df_sc["qtd_plot"].map(lambda x: f"{x:.2f} {unidade_plot}" if pd.notna(x) else "—")
+
+    customdata_sc = df_sc[["nome", "preco_fmt", "qtd_fmt_origem", "qtd_plot_fmt", "categoria"]].values
+
     fig_sc = px.scatter(
         df_sc,
-        x="quantidade_valor",
+        x="qtd_plot",
         y="preco",
         color="categoria",
         color_discrete_sequence=SEQ,
         labels={
-            "quantidade_valor": "Quantidade", 
+            "qtd_plot": f"Quantidade ({unidade_plot})", 
             "preco": "Preço (R$)"
         },
         title=f"Preço vs. Quantidade — {brand_scatter_label}",
@@ -263,7 +315,7 @@ else:
     fig_sc.update_traces(
         marker=dict(size=SCATTER_MARKER_SIZE, line=dict(width=0)),
         customdata=customdata_sc,
-        hovertemplate="<b>%{customdata[0]}</b><br>Preço: %{customdata[1]}<br>Quantidade: %{customdata[2]}<br>Categoria: %{customdata[3]}<extra></extra>"
+        hovertemplate="<b>%{customdata[0]}</b><br>Preço: %{customdata[1]}<br>Qtd (origem): %{customdata[2]}<br>Qtd (plot): %{customdata[3]}<br>Categoria: %{customdata[4]}<extra></extra>"
     )
     fig_sc.update_layout(
         showlegend=True,

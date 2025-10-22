@@ -4,8 +4,10 @@ from typing import Tuple, Set, List
 from pathlib import Path
 import pandas as pd
 import streamlit as st
-
+# ...existing code...
 CSV_DIR = Path("/home/usuario/Área de trabalho/Dados/Arquivo")
+CSV_DIR = Path(__file__).resolve().parent.parent.parent / "Arquivo"
+# ...existing code...
 
 EXPECTED_COLS = [
     "marca","nome","subtitulo","categoria","quantidade","preco",
