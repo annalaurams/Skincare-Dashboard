@@ -4,10 +4,8 @@ from typing import Tuple, Set, List
 from pathlib import Path
 import pandas as pd
 import streamlit as st
-# ...existing code...
 CSV_DIR = Path("/home/usuario/Área de trabalho/Dados/Arquivo")
 CSV_DIR = Path(__file__).resolve().parent.parent.parent / "Arquivo"
-# ...existing code...
 
 EXPECTED_COLS = [
     "marca","nome","subtitulo","categoria","quantidade","preco",
@@ -54,18 +52,15 @@ def load_data(path_or_dir: str | Path = CSV_DIR) -> pd.DataFrame:
     else:
         raise FileNotFoundError(f"Caminho inválido: {p}")
 
-    # =================== Normalizações ===================
-    # preço -> float (suporta "99,90")
     df["preco"] = (
         df["preco"]
         .astype(str)
         .str.replace(",", ".", regex=False)
-        .str.extract(r"([\d\.]*\d(?:\.\d+)?)", expand=False)  # pega número seguro
+        .str.extract(r"([\d\.]*\d(?:\.\d+)?)", expand=False)  
         .fillna("0")
         .astype(float)
     )
 
-    # quantidade -> separa valor/unidade
     def _split_qty(q: str) -> Tuple[float | None, str | None]:
         if pd.isna(q):
             return None, None
@@ -81,7 +76,6 @@ def load_data(path_or_dir: str | Path = CSV_DIR) -> pd.DataFrame:
     df["quantidade_valor"]   = qty.apply(lambda t: t[0])
     df["quantidade_unidade"] = qty.apply(lambda t: t[1])
 
-    # strings seguras
     for c in ["beneficios","ingredientes","categoria","marca","tipo_pele","subtitulo","imagem","nome"]:
         if c in df.columns:
             df[c] = df[c].fillna("").astype(str)

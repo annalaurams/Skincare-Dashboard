@@ -1,30 +1,20 @@
+# pages/3_Ingredientes.py
 from __future__ import annotations
-import sys
-from pathlib import Path
-from typing import List
-import numpy as np
-import pandas as pd
-import streamlit as st
-import plotly.express as px
 
-from core.data import load_data
-from core.theme import apply_base_theme, apply_palette_css, color_sequence
+# ---- Base centralizada: st, pd, px, load_data, color_sequence, modelos, np, go, Path, re, Optional, List, Tuple etc. ----
+from include import *
 
-MODELS_DIR = "/home/usuario/Área de trabalho/Dados/models"
-sys.path.append(MODELS_DIR)
-try:
-    from category import CATEGORY_CANONICAL_ORDER
-except Exception:
-    CATEGORY_CANONICAL_ORDER = []
-try:
-    from ingredient import INGREDIENTES_VALIDOS
-except Exception:
-    INGREDIENTES_VALIDOS = []
+# ===== Config local só da paleta (NÃO chamar set_page_config/apply_base_theme aqui) =====
+if "palette_name" not in st.session_state:
+    st.session_state["palette_name"] = "Solaris"
 
-st.set_page_config(page_title="Skincare • Ingredientes Ativos", page_icon="🧪", layout="wide")
+apply_palette_css(st.session_state["palette_name"])
 
-TITLE_TEXT           = "Ingredientes por Marca e Categoria"
-TAGLINE_TEXT         = "Explore os ingredientes ativos mais usados pelas marcas e compare a diversidade de formulações."
+SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f3"]
+
+# ===== Constantes visuais da página =====
+TITLE_TEXT           = "Ingredientes: O que há nas fórmulas"
+TAGLINE_TEXT         = "Explore os ingredientes mais presentes e compare a composição entre as marcas"
 TITLE_SIZE           = 60
 TAGLINE_SIZE         = 26
 
@@ -33,31 +23,43 @@ SUBTITLE_SIZE        = 22
 
 CHART_HEIGHT         = 680
 LEGEND_FONT_SIZE     = 30
-TOOLTIP_FONT_SIZE    = 26
-AXIS_TITLE_SIZE      = 24
+TOOLTIP_FONT_SIZE    = 24
+AXIS_TITLE_SIZE      = 26
 AXIS_TICK_SIZE       = 22
-BAR_TEXT_SIZE        = 18
+BAR_TEXT_SIZE        = 20
+PIE_TEXT_SIZE        = 20
 
 WIDGET_HEIGHT_PX     = 48
 
+def accent(i=0): return SEQ[i % len(SEQ)]
+def accent2(): return SEQ[1] if len(SEQ) > 1 else "#22c55e"
+def text_color(): return "#262730"
+def subtext_color(): return "#555"
+def neutral_border(): return "#ebedf0"
+def panel_bg(): return "#ffffff"
+
+
 if "palette_name" not in st.session_state:
-    st.session_state["palette_name"] = "Solaris"  
+    st.session_state["palette_name"] = "Solaris"
 
 apply_base_theme()
 apply_palette_css(st.session_state["palette_name"])
-SEQ = color_sequence(st.session_state["palette_name"])
+SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f3"]
 
-def accent(i=0): return SEQ[i % len(SEQ)] if SEQ else "#6e56cf"
+def accent(i=0): return SEQ[i % len(SEQ)]
+def accent2(): return SEQ[1] if len(SEQ) > 1 else "#22c55e"
 def text_color(): return "#262730"
 def subtext_color(): return "#555"
+def neutral_border(): return "#ebedf0"
 def panel_bg(): return "#ffffff"
 
+# ===== CSS (mesmo padrão da tela de Benefícios) =====
 st.markdown(f"""
 <style>
-/* Títulos */
 .section-title {{ font-size:{SECTION_TITLE_SIZE}px; font-weight:700; color:{text_color()}; margin: 1rem 0 .5rem 0; }}
 .subtle       {{ font-size:{TAGLINE_SIZE}px; color:{subtext_color()}; }}
-/* Altura de inputs */
+
+/* Altura e fonte dos selects/inputs */
 .stSelectbox div[role="combobox"],
 .stMultiSelect div[role="combobox"],
 .stTextInput input, .stTextInput textarea {{
@@ -65,20 +67,110 @@ st.markdown(f"""
     height: {WIDGET_HEIGHT_PX}px !important;
     font-size: 18px !important;
 }}
-/* Select ocupa 100% */
 div[data-baseweb="select"] {{ width: 100% !important; }}
-/* DataFrame estilizado */
-[data-testid="stDataFrame"] thead tr th {{
-    background: linear-gradient(90deg, {accent(0)}22, {accent(1)}22) !important;
+
+/* Label dos widgets maior */
+div[data-testid="stWidgetLabel"] p {{ font-size: 20px !important; }}
+
+/* Opções dos radios maiores */
+.stRadio label span {{ font-size: 18px !important; }}
+
+/* Botões de paginação */
+.dist-nav .stButton>button {{
+    background: {accent(0)}22 !important;
+    border: 2px solid {accent(0)} !important;
     color: {text_color()} !important;
-    font-weight: 800 !important;
-    font-size: 16px !important;
+    padding: 12px 22px !important;
+    height: 52px !important;
+    font-size: 19px !important;
+    border-radius: 14px !important;
 }}
-[data-testid="stDataFrame"] tbody td {{
-    font-size: 16px !important;
+
+/* NOTA */
+.note-box {{
+    background: #f8f9fa;
+    border: 1px solid {neutral_border()};
+    border-left: none;
+    padding: 1rem;
+    margin: 1rem 0 1.25rem 0;
+    border-radius: 10px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: {subtext_color()};
+}}
+.note-box b {{ color: {text_color()}; }}
+
+/* Cabeçalho de marca */
+.brand-header {{
+    background: linear-gradient(135deg, {accent(0)} 0%, {accent2()} 100%);
+    color: #fff;
+    padding: 18px 24px;
+    border-radius: 14px;
+    font-size: 28px;
+    font-weight: 900;
+    margin: 32px 0 16px 0;
+    box-shadow: 0 4px 12px {accent(0)}40;
+}}
+
+/* Tarja de bucket */
+.bucket-title {{
+    background: {accent(0)}15;
+    color: {accent(0)};
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 20px;
+    font-weight: 800;
+    margin: 16px 0 12px 0;
+    border-left: 5px solid {accent(0)};
+}}
+
+/* DataFrame */
+div[data-testid="stDataFrame"] {{
+    border: 1px solid {neutral_border()} !important;
+    border-radius: 12px !important;
+    overflow: visible !important;
+}}
+div[data-testid="stDataFrame"] table {{ font-size: 16px !important; line-height: 1.45 !important; }}
+div[data-testid="stDataFrame"] thead th {{
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    padding: 10px 14px !important;
+    background-color: #fafafa !important;
+    color: {text_color()} !important;
+    white-space: nowrap !important;
+}}
+div[data-testid="stDataFrame"] tbody td {{
+    padding: 10px 14px !important;
+    font-size: 26px !important;
+    white-space: normal !important;
+    vertical-align: top !important;
 }}
 </style>
 """, unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+/* ===== Ajuste do tamanho da fonte dentro das tabelas ===== */
+div[data-testid="stDataFrame"] tbody td div {
+    font-size: 42px !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+}
+div[data-testid="stDataFrame"] thead th div {
+    font-size: 42px !important;
+    font-weight: 700 !important;
+}
+div[data-testid="stDataFrame"] table {
+    border-collapse: separate !important;
+    border-spacing: 0 6px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ===== Helpers =====
+def alpha_sorted(opts: List[str]) -> List[str]:
+    return sorted([o for o in opts if isinstance(o, str)], key=lambda s: s.casefold())
 
 def _pretty_from_source(fname: str) -> str:
     stem = Path(fname).stem
@@ -87,14 +179,18 @@ def _pretty_from_source(fname: str) -> str:
     return stem.replace("_", " ").title()
 
 def split_semicolon(s: str) -> List[str]:
-    if not isinstance(s, str) or not s.strip():
-        return []
-    return [p.strip() for p in s.split(";") if p.strip()]
+    if not isinstance(s, str) or not s.strip(): return []
+    parts = [p.strip() for chunk in s.split(";") for p in chunk.split(",")]
+    return [p for p in parts if p]
 
 def explode_ingredients(df_in: pd.DataFrame) -> pd.DataFrame:
-    """Explode de ingredientes; se houver lista oficial, filtra por ela."""
+    cols = ["ingrediente","produto","marca","categoria","preco",
+            "quantidade_valor","quantidade_unidade","image_url","_source_file"]
     rows = []
     valid = set(INGREDIENTES_VALIDOS) if INGREDIENTES_VALIDOS else None
+    if df_in is None or df_in.empty:
+        return pd.DataFrame(columns=cols)
+
     for _, r in df_in.iterrows():
         for ing in split_semicolon(r.get("ingredientes", "")):
             if valid is not None and ing not in valid:
@@ -108,63 +204,73 @@ def explode_ingredients(df_in: pd.DataFrame) -> pd.DataFrame:
                 "quantidade_valor": r.get("quantidade_valor"),
                 "quantidade_unidade": r.get("quantidade_unidade"),
                 "image_url": r.get("image_url") or r.get("imagem_url") or r.get("imagem"),
+                "_source_file": r.get("_source_file"),
             })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=cols)
 
-def pct_str(value: float, total: float) -> str:
+def fmt_price(v):
     try:
-        v = float(value) / float(max(total, 1))
-        return f"{100*v:.1f}%"
+        x = float(v)
+        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except Exception:
         return "—"
 
+def fmt_qtd(v, u):
+    if pd.isna(v): return "—"
+    try:
+        v_float = float(v)
+        v_str = f"{int(v_float)}" if v_float.is_integer() else f"{v_float:.2f}"
+    except:
+        v_str = str(v)
+    return f"{v_str} {u}" if pd.notna(u) and str(u).strip() else v_str
+
+# ===== Carrega dados & opções =====
 df = load_data()
 
-# Marca por arquivo-fonte 
 uses_files = "_source_file" in df.columns and df["_source_file"].notna().any()
 if uses_files:
-    files = sorted(df["_source_file"].dropna().unique().tolist())
-    LABEL_MAP = { _pretty_from_source(f): f for f in files } 
+    files = alpha_sorted(df["_source_file"].dropna().unique().tolist())
+    LABEL_MAP = { _pretty_from_source(f): f for f in files }  # label -> arquivo
     BRAND_LABELS = list(LABEL_MAP.keys())
 else:
-    brands_col = sorted(df["marca"].dropna().unique().tolist()) if "marca" in df.columns else []
-    LABEL_MAP = { b: b for b in brands_col }  
+    brands_col = alpha_sorted(df["marca"].dropna().unique().tolist()) if "marca" in df.columns else []
+    LABEL_MAP = { b: b for b in brands_col }
     BRAND_LABELS = list(LABEL_MAP.keys())
 
-CAT_CANON = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else []
-CAT_PRESENT = sorted(df["categoria"].dropna().unique().tolist())
-CAT_OPTS = ["(todas)"] + (CAT_CANON if CAT_CANON else CAT_PRESENT)
+CAT_ALL  = alpha_sorted(CATEGORY_CANONICAL_ORDER or df.get("categoria", pd.Series(dtype=str)).dropna().unique().tolist())
+SKIN_ALL = alpha_sorted(SKIN_TYPE_CANONICAL_ORDER or [])
 
+# ===== Título + Nota =====
 st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
-st.markdown(f"<div class='subtle' style='margin:.5rem 0 1.25rem 0;'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='subtle' style='margin:.5rem 0 .75rem 0;'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
 
-# Filtros principais
+st.markdown("""
+<div class="note-box">
+<b>Nota:</b> Este painel utiliza os dados consolidados das marcas brasileiras analisadas.
+As contagens consideram <i>produtos distintos</i>. Quando ausentes, algumas informações foram complementadas manualmente.
+</div>
+""", unsafe_allow_html=True)
+
+# ===== Filtros principais =====
 st.markdown(f"<div class='section-title'>Filtros</div>", unsafe_allow_html=True)
-
-fc1, fc2, fc3 = st.columns([1.1, 1, 1.2])
+fc1, fc2 = st.columns([1.1, 1])
 with fc1:
     sel_brand_label = st.selectbox("Marca (obrigatório)", options=BRAND_LABELS, index=0 if BRAND_LABELS else None)
     sel_brand_value = LABEL_MAP.get(sel_brand_label) if sel_brand_label else None
 with fc2:
-    sel_cat = st.selectbox("Categoria (opcional)", options=CAT_OPTS, index=0)
-with fc3:
-    search_ing = st.text_input("Busca rápida (opcional)", value="").strip()
+    sel_cat = st.selectbox("Categoria (opcional)", options=["(todas)"] + CAT_ALL, index=0)
 
 if sel_brand_value is None:
     st.info("Selecione uma marca.")
     st.stop()
 
-# Base da marca 
-if uses_files:
-    df_brand = df[df["_source_file"] == sel_brand_value].copy()
-else:
-    df_brand = df[df["marca"] == sel_brand_label].copy()
+# Base da marca
+df_brand = df[df["_source_file"] == sel_brand_value].copy() if uses_files else df[df["marca"] == sel_brand_label].copy()
 if sel_cat != "(todas)":
     df_brand = df_brand[df_brand["categoria"] == sel_cat]
 
-# Resumo 
+# ===== Resumo =====
 KPI_BORDER_PX = 3
-
 def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
     st.markdown(
         f"""
@@ -175,10 +281,10 @@ def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
             background:{panel_bg()};
         ">
           <div style="color:{subtext_color()}; font-size:{SUBTITLE_SIZE}px;">{title}</div>
-          <div style="font-weight:800; font-size:28px; color:{text_color()}; line-height:1; margin-top:4px;">
+          <div style="font-weight:400; font-size:28px; color:{text_color()}; line-height:1; margin-top:4px;">
             {value}
           </div>
-          <div style="color:{subtext_color()}; margin-top:2px;">{subtitle}</div>
+          <div style="color:{subtext_color()}; margin-top:2px; font-size:18px;">{subtitle}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -187,481 +293,358 @@ def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
 st.markdown(f"<div class='section-title'>Resumo</div>", unsafe_allow_html=True)
 
 exp_brand = explode_ingredients(df_brand)
-total_ing_distintos = exp_brand["ingrediente"].nunique() if not exp_brand.empty else 0
 
-# Top ingrediente 
 if exp_brand.empty:
     top_ing, top_count = "—", 0
 else:
-    top_s = (exp_brand.groupby("ingrediente")["produto"].nunique()
-             .sort_values(ascending=False))
-    top_ing = top_s.index[0]; top_count = int(top_s.iloc[0])
+    top_s = exp_brand.groupby("ingrediente")["produto"].nunique().sort_values(ascending=False)
+    top_ing = top_s.index[0]
+    top_count = int(top_s.iloc[0])
 
-# Ingrediente exclusivo na marca 
-exp_all = explode_ingredients(df)
+exp_all = explode_ingredients(df.copy())
 exclusivos = []
-if not exp_brand.empty:
+if not exp_brand.empty and not exp_all.empty:
     set_marca = set(exp_brand["ingrediente"].unique())
-    by_brand = exp_all.groupby(["ingrediente"])["marca"].nunique()
-    exclusivos = [ing for ing in set_marca if by_brand.get(ing, 0) == 1]
+    key = "marca" if "marca" in exp_all.columns else "_source_file"
+    by_brand = exp_all.groupby("ingrediente")[key].nunique()
+    exclusivos = [b for b in set_marca if by_brand.get(b, 0) == 1]
 ex_ing = exclusivos[0] if exclusivos else "—"
 
-k1, k2, k3 = st.columns(3)
-with k1:
-    summary_card("Ingredientes distintos", str(total_ing_distintos), "na marca selecionada", color_idx=0)
-with k2:
+kc1, kc2 = st.columns(2)
+with kc1:
     summary_card("Ingrediente mais usado", top_ing, f"{top_count} produto(s)", color_idx=1)
-with k3:
-    summary_card("Ingrediente exclusivo", ex_ing, "apenas nesta marca", color_idx=2)
+with kc2:
+    summary_card("Ingrediente exclusivo", ex_ing, "apenas nesta marca (no dataset)", color_idx=2)
 
 st.markdown("---")
 
-# 1) Distribuição de Ingredientes — Barras/Rosca (+ filtro)
-st.markdown(f"<div class='section-title'>Distribuição de Ingredientes</div>", unsafe_allow_html=True)
+# ===== Distribuição de Ingredientes (paginada) =====
+st.markdown(f"<div class='section-title'>Distribuição de Ingredientes (paginada)</div>", unsafe_allow_html=True)
 
-exp_dist = explode_ingredients(df_brand)
-total_produtos_contexto = df_brand["nome"].nunique()
+if "ing_dist_page" not in st.session_state: st.session_state["ing_dist_page"] = 1
 
-if INGREDIENTES_VALIDOS:
-    ing_present = [i for i in INGREDIENTES_VALIDOS if i in set(exp_dist["ingrediente"].unique())]
-else:
-    ing_present = sorted(exp_dist["ingrediente"].dropna().unique().tolist()) if not exp_dist.empty else []
+col_sel, col_prev, col_next, _ = st.columns([1.0, 0.6, 0.8, 6])
+with col_sel:
+    page_size = st.selectbox("Itens por página", options=[10, 15, 20, 25, 30], index=1, key="ing_page_size")
+with col_prev:
+    st.markdown('<div class="dist-nav">', unsafe_allow_html=True)
+    prev = st.button("Anterior", key="ing_prev")
+    st.markdown('</div>', unsafe_allow_html=True)
+with col_next:
+    st.markdown('<div class="dist-nav">', unsafe_allow_html=True)
+    next_ = st.button("Próxima", key="ing_next")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-c1, c2 = st.columns([1.0, 1.0])
-with c1:
-    view_opt = st.radio("Visualização", ["Barras", "Rosca"], horizontal=True, key="ing_view")
-with c2:
-    ing_mode = st.radio("Ingredientes", ["(Todos)", "Selecionar"], horizontal=True, key="ing_mode")
-
-sel_ings_multi: List[str] = []
-if ing_mode == "Selecionar":
-    sel_ings_multi = st.multiselect("Escolha ingredientes (um ou mais)", options=ing_present, default=ing_present[:10])
-
-if search_ing:
-    exp_dist = exp_dist[exp_dist["ingrediente"].str.contains(search_ing, case=False, na=False)]
-if ing_mode == "Selecionar" and sel_ings_multi:
-    exp_dist = exp_dist[exp_dist["ingrediente"].isin(sel_ings_multi)]
-
-if exp_dist.empty or total_produtos_contexto == 0:
+if exp_brand.empty:
     st.info("Sem dados para exibir a distribuição.")
 else:
-    by_ing = (exp_dist.groupby("ingrediente")["produto"]
-              .nunique()
-              .reset_index(name="qtd_produtos"))
-    by_ing["pct"] = by_ing["qtd_produtos"] / float(total_produtos_contexto)
-    by_ing = by_ing.sort_values(["qtd_produtos", "ingrediente"], ascending=[False, True])
+    dist = (exp_brand.groupby("ingrediente")["produto"].nunique().reset_index(name="qtd_produtos"))
+    dist = dist.sort_values(["qtd_produtos", "ingrediente"], ascending=[False, True]).reset_index(drop=True)
 
-    if view_opt == "Barras":
-        fig = px.bar(
-            by_ing, x="ingrediente", y="qtd_produtos",
-            text="qtd_produtos",
+    total_pages = max(1, int(np.ceil(len(dist) / page_size)))
+    if prev: st.session_state["ing_dist_page"] = max(1, st.session_state["ing_dist_page"] - 1)
+    if next_: st.session_state["ing_dist_page"] = min(total_pages, st.session_state["ing_dist_page"] + 1)
+
+    start = (st.session_state["ing_dist_page"] - 1) * page_size
+    end = start + page_size
+    page_df = dist.iloc[start:end].copy()
+
+    total_produtos_contexto = df_brand["nome"].nunique() if "nome" in df_brand.columns else 0
+    page_df["pct"] = page_df["qtd_produtos"] / float(max(total_produtos_contexto, 1))
+
+    fig = px.bar(
+        page_df, x="ingrediente", y="qtd_produtos",
+        text="qtd_produtos",
+        color="ingrediente", color_discrete_sequence=SEQ,
+        labels={"ingrediente": "Ingrediente", "qtd_produtos": "Produtos"}
+    )
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(size=BAR_TEXT_SIZE),
+        hovertemplate="<b>%{x}</b><br>Produtos: %{y} de " + str(total_produtos_contexto) +
+                      "<br>Participação: %{customdata[0]}<extra></extra>",
+        customdata=np.array([[f"{100*p:.1f}%"] for p in page_df["pct"]])
+    )
+    fig.update_layout(
+        height=CHART_HEIGHT,
+        showlegend=False,
+        bargap=0.12,
+        xaxis_tickangle=-20,
+        xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+        yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+        hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
+        margin=dict(t=40, b=120, l=30, r=20),
+        title=f"Página {st.session_state['ing_dist_page']} de {total_pages}"
+    )
+    st.plotly_chart(fig, width="stretch")
+
+st.markdown("---")
+
+# ===== Top 3 ingredientes da marca =====
+st.markdown(f"<div class='section-title'>Top 3 Ingredientes da Marca (todos os produtos)</div>", unsafe_allow_html=True)
+
+df_brand_all = df[df["_source_file"] == sel_brand_value].copy() if uses_files else df[df["marca"] == sel_brand_label].copy()
+exp_brand_all = explode_ingredients(df_brand_all)
+
+if exp_brand_all.empty:
+    st.info("Sem dados para calcular o Top 3.")
+    TOP3_ING = []
+else:
+    top3 = (exp_brand_all.groupby("ingrediente")["produto"]
+            .nunique().sort_values(ascending=False).head(3).reset_index(name="produtos"))
+    TOP3_ING = top3["ingrediente"].tolist()
+    total_prod = df_brand_all["nome"].nunique()
+    top3["pct"] = top3["produtos"] / float(max(total_prod, 1))
+
+    chart_choice = st.radio("Visualização", options=["Barras", "Rosca (%)"], horizontal=True, index=0, key="ing_top_chart")
+    if chart_choice == "Barras":
+        fig_top = px.bar(
+            top3, x="ingrediente", y="produtos", text="produtos",
             color="ingrediente", color_discrete_sequence=SEQ,
-            labels={"ingrediente": "Ingrediente", "qtd_produtos": "Quantos Produtos"},
-            hover_data={}
+            labels={"ingrediente": "Ingrediente", "produtos": "Produtos"}
         )
-        fig.update_traces(
-            textposition="outside",
-            textfont=dict(size=BAR_TEXT_SIZE, color="#363636"),
-            hovertemplate="<b>%{x}</b><br>Produtos: %{y} de " + str(total_produtos_contexto) +
-                          "<br>Participação: %{customdata[0]}<extra></extra>",
-            customdata=np.array([[pct_str(v, total_produtos_contexto)] for v in by_ing["qtd_produtos"]])
-        )
-        fig.update_layout(
-            height=CHART_HEIGHT, showlegend=False,
+        fig_top.update_traces(textposition="outside", textfont=dict(size=BAR_TEXT_SIZE))
+        fig_top.update_layout(
+            height=CHART_HEIGHT//1.2, showlegend=False, bargap=0.12,
             xaxis_tickangle=-20,
             xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
             margin=dict(t=40, b=120, l=30, r=20)
         )
-        st.plotly_chart(fig, use_container_width=True)
     else:
-        figp = px.pie(
-            by_ing, names="ingrediente", values="qtd_produtos",
-            hole=0.55, color_discrete_sequence=SEQ
+        fig_top = px.pie(
+            top3, names="ingrediente", values="pct",
+            hole=0.45, color="ingrediente", color_discrete_sequence=SEQ
         )
-        figp.update_traces(
-            textposition="inside", texttemplate="%{percent:.1%}",
-            hovertemplate="<b>%{label}</b><br>Produtos: %{value} de " + str(total_produtos_contexto) +
-                          "<br>Participação: %{percent:.1%}<extra></extra>"
-        )
-        figp.update_layout(
-            height=CHART_HEIGHT,
-            legend=dict(font=dict(size=LEGEND_FONT_SIZE)),
-            hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
-            margin=dict(t=40, b=40, l=40, r=40)
-        )
-        st.plotly_chart(figp, use_container_width=True)
+        fig_top.update_traces(texttemplate="%{label}<br>%{percent:.1%}", textfont_size=PIE_TEXT_SIZE)
+        fig_top.update_layout(height=CHART_HEIGHT//1.2, legend=dict(font=dict(size=LEGEND_FONT_SIZE)))
+    st.plotly_chart(fig_top, width="stretch")
 
 st.markdown("---")
 
-# 2) Top 5 Ingredientes
-st.markdown(f"<div class='section-title'>Top 5 Ingredientes</div>", unsafe_allow_html=True)
+# ===== Comparação de ingredientes entre marcas (Top 3) =====
+st.markdown(f"<div class='section-title'>Comparação de Ingredientes entre Marcas (Top 3)</div>", unsafe_allow_html=True)
 
-if exp_dist.empty or total_produtos_contexto == 0:
-    st.info("Sem dados para exibir o Top 5.")
-else:
-    top5 = (exp_dist.groupby("ingrediente")["produto"].nunique()
-            .reset_index(name="qtd_produtos")
-            .sort_values(["qtd_produtos", "ingrediente"], ascending=[False, True])
-            .head(5))
-    top5["pct"] = top5["qtd_produtos"] / float(total_produtos_contexto)
+brand_opts = ["(todas)"] + BRAND_LABELS
+sel_brands = st.multiselect("Marcas", options=brand_opts, default=[sel_brand_label], key="ing_comp_brands")
 
-    figt = px.bar(
-        top5.sort_values(["qtd_produtos","ingrediente"], ascending=[True, True]),
-        x="qtd_produtos", y="ingrediente",
-        orientation="h",
-        text="qtd_produtos",
-        color="ingrediente", color_discrete_sequence=SEQ,
-        labels={"qtd_produtos": "Quantidade de Produtos", "ingrediente": "Ingrediente"},
-        hover_data={}
-    )
-    figt.update_traces(
-        textposition="outside",
-        textfont=dict(size=BAR_TEXT_SIZE, color="#363636"),
-        hovertemplate="<b>%{y}</b><br>Produtos: %{x} de " + str(total_produtos_contexto) +
-                      "<br>Participação: %{customdata[0]}<extra></extra>",
-        customdata=np.array([[pct_str(v, total_produtos_contexto)] for v in top5["qtd_produtos"]])
-    )
-    figt.update_layout(
-        height=CHART_HEIGHT//1.4, showlegend=False,
-        xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
-        yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
-        hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
-        margin=dict(t=40, b=40, l=140, r=40)
-    )
-    st.plotly_chart(figt, use_container_width=True)
+if "(todas)" in sel_brands:
+    sel_brands = BRAND_LABELS[:]
+elif not sel_brands:
+    sel_brands = [sel_brand_label]
 
-st.markdown("---")
-
-# 3) Ingredientes por Categoria (heatmap)
-st.markdown(f"<div class='section-title'>Ingredientes por Categoria</div>", unsafe_allow_html=True)
-
-if uses_files:
-    exp_brand_allcats = explode_ingredients(df[df["_source_file"] == sel_brand_value])
-else:
-    exp_brand_allcats = explode_ingredients(df[df["marca"] == sel_brand_label])
-
-if exp_brand_allcats.empty:
-    st.info("Sem ingredientes para construir o mapa por categoria.")
-    st.stop()
-
-cat_all = exp_brand_allcats["categoria"].dropna().unique().tolist()
-
-if CATEGORY_CANONICAL_ORDER:
-    can_set = set(CATEGORY_CANONICAL_ORDER)
-    cat_sorted = [c for c in CATEGORY_CANONICAL_ORDER if c in cat_all] + [c for c in sorted(cat_all) if c not in can_set]
-else:
-    cat_sorted = sorted(cat_all)
-
-default_cats = cat_sorted[:min(10, len(cat_sorted))]
-
-sel_cats_hm = st.multiselect(
-    "Categorias (selecione de 1 a 10)",
-    options=cat_sorted,
-    default=default_cats,
-    max_selections=10,
-    help="Escolha até 10 categorias para o mapa de calor."
-)
-
-if not sel_cats_hm:
-    st.warning("Selecione pelo menos uma categoria para exibir o mapa.")
-    st.stop()
-
-exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["categoria"].isin(sel_cats_hm)]
-
-if "ing_mode" in st.session_state and st.session_state["ing_mode"] == "Selecionar":
-    if 'sel_ings_multi' in locals() and sel_ings_multi:
-        exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["ingrediente"].isin(sel_ings_multi)]
-elif 'search_ing' in locals() and search_ing:
-    exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["ingrediente"].str.contains(search_ing, case=False, na=False)]
-
-if exp_brand_allcats.empty:
-    st.info("Sem ingredientes para construir o mapa por categoria com os filtros atuais.")
-else:
-
-    if 'sel_ings_multi' in locals() and sel_ings_multi:
-        ing_focus = sel_ings_multi
-    else:
-        N_TOP = 12
-        ing_focus = (exp_brand_allcats.groupby("ingrediente")["produto"]
-                     .nunique().sort_values(ascending=False).head(N_TOP).index.tolist())
-
-    sub = exp_brand_allcats[exp_brand_allcats["ingrediente"].isin(ing_focus)]
-    pivot = (sub.groupby(["categoria", "ingrediente"])["produto"]
-             .nunique().unstack(fill_value=0))
-
-    pivot = pivot.loc[[c for c in sel_cats_hm if c in pivot.index], :]
-
-    n_seq = len(SEQ)
-    if n_seq >= 18:
-        block = n_seq // 4                  
-        third_line = SEQ[2*block:3*block]   
-    else:
-        third_line = SEQ
-
-    custom_scale = [
-        (0.0, "#ffffff"),  
-        (0.05, "#f0f0f0"),  
-        (0.15, "#d9d9d9"), 
-    ]
-    steps = np.linspace(0.2, 1, len(third_line))
-    for pos, color in zip(steps, third_line):
-        custom_scale.append((float(pos), color))
-
-    fig_hm = px.imshow(
-        pivot,
-        color_continuous_scale=custom_scale,  
-        aspect="auto",
-        labels=dict(color="Produtos"),
-        title=f"Categorias × Ingredientes — {sel_brand_label}"
-    )
-    fig_hm.update_layout(
-        font=dict(size=52)  
-    )
-
-    fig_hm.update_layout(
-        height=CHART_HEIGHT,
-        coloraxis_colorbar=dict(title="Produtos", tickfont=dict(size=AXIS_TICK_SIZE)),
-        xaxis=dict(tickfont=dict(size=AXIS_TICK_SIZE)),
-        yaxis=dict(tickfont=dict(size=AXIS_TICK_SIZE)),
-        hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE)
-    )
-    st.plotly_chart(fig_hm, use_container_width=True)
-
-
-st.markdown("---")
-
-# 4) Comparação entre Marcas
-st.markdown(f"<div class='section-title'>Comparação de Ingredientes entre Marcas</div>", unsafe_allow_html=True)
-
-comp_labels = st.multiselect(
-    "Marcas (máx. 3)",
-    options=BRAND_LABELS,
-    default=[sel_brand_label],
-    max_selections=3
-)
-
-cmp_ing_mode = st.radio("Ingredientes (comparação)", ["(Todos)", "Selecionar"], horizontal=True, key="cmp_ing_mode")
-
-# opções de ingredientes para comparação
-cmp_opts: List[str] = []
-if cmp_ing_mode == "Selecionar":
-    if comp_labels:
-        tmp = []
-        for lab in comp_labels:
-            val = LABEL_MAP[lab]
-            base = df[df["_source_file"] == val] if uses_files else df[df["marca"] == lab]
-            tmp.append(explode_ingredients(base)[["ingrediente"]])
-        exist = sorted(pd.concat(tmp)["ingrediente"].dropna().unique().tolist()) if tmp else []
-        cmp_opts = [i for i in INGREDIENTES_VALIDOS if i in set(exist)] if INGREDIENTES_VALIDOS else exist
-    else:
-        exist = explode_ingredients(df)["ingrediente"].dropna().unique().tolist()
-        cmp_opts = [i for i in INGREDIENTES_VALIDOS if i in set(exist)] if INGREDIENTES_VALIDOS else sorted(exist)
-
-cmp_sel_ings: List[str] = []
-if cmp_ing_mode == "Selecionar":
-    cmp_sel_ings = st.multiselect("Ingredientes (um ou mais)", options=cmp_opts, default=cmp_opts[:10])
-
-if comp_labels:
+if sel_brands:
     dfs_comp = []
-    for lab in comp_labels:
+    for lab in sel_brands:
         val = LABEL_MAP[lab]
         base = df[df["_source_file"] == val] if uses_files else df[df["marca"] == lab]
         exp_ = explode_ingredients(base)
-        if cmp_ing_mode == "Selecionar" and cmp_sel_ings:
-            exp_ = exp_[exp_["ingrediente"].isin(cmp_sel_ings)]
+        ing_focus = TOP3_ING if 'TOP3_ING' in locals() else []
+        if ing_focus:
+            exp_ = exp_[exp_["ingrediente"].isin(ing_focus)]
+        if exp_.empty:
+            local_top = (explode_ingredients(base).groupby("ingrediente")["produto"]
+                         .nunique().sort_values(ascending=False).head(3).index.tolist())
+            exp_ = explode_ingredients(base)
+            exp_ = exp_[exp_["ingrediente"].isin(local_top)]
         grp = (exp_.groupby("ingrediente")["produto"].nunique().reset_index(name="produtos"))
         grp["marca_label"] = lab
         dfs_comp.append(grp)
     comp_df = pd.concat(dfs_comp, ignore_index=True) if dfs_comp else pd.DataFrame()
+
     if comp_df.empty:
         st.info("Sem dados para comparar.")
     else:
-        if cmp_ing_mode == "(Todos)":
-            N_TOP = 12
-            topN = (comp_df.groupby("ingrediente")["produtos"].sum()
-                    .sort_values(ascending=False).head(N_TOP).index.tolist())
-            comp_df = comp_df[comp_df["ingrediente"].isin(topN)]
-        fig_cmp = px.bar(
-            comp_df,
-            x="ingrediente", y="produtos",
-            color="marca_label", barmode="group",
-            color_discrete_sequence=[SEQ[4]],
-            labels={"ingrediente": "Ingrediente", "produtos": "Produtos", "marca_label": "Marca"}
-        )
+        orient = st.radio("Orientação do gráfico", options=["Barras verticais", "Barras horizontais"], horizontal=True, key="ing_orient")
+        if orient == "Barras verticais":
+            fig_cmp = px.bar(
+                comp_df, x="ingrediente", y="produtos",
+                color="marca_label", barmode="group",
+                color_discrete_sequence=SEQ,
+                labels={"ingrediente": "Ingrediente", "produtos": "Produtos", "marca_label": "Marca"}
+            )
+        else:
+            fig_cmp = px.bar(
+                comp_df, x="produtos", y="ingrediente",
+                color="marca_label", barmode="group", orientation="h",
+                color_discrete_sequence=SEQ,
+                labels={"ingrediente": "Ingrediente", "produtos": "Produtos", "marca_label": "Marca"}
+            )
+
         fig_cmp.update_layout(
             height=CHART_HEIGHT,
+            bargap=0.12,
             legend=dict(font=dict(size=LEGEND_FONT_SIZE)),
             xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
             margin=dict(t=40, b=120, l=30, r=20)
         )
-        st.plotly_chart(fig_cmp, use_container_width=True)
+        fig_cmp.update_traces(textfont=dict(size=BAR_TEXT_SIZE))
+        st.plotly_chart(fig_cmp, width="stretch")
 else:
-    st.caption("Selecione 1 a 3 marcas para comparar.")
+    st.caption("Selecione ao menos uma marca.")
 
 st.markdown("---")
 
-# 5) Pesquisa por Ingrediente — cards estilizados
-st.markdown(
-    f"<h3 style='font-size:{SECTION_TITLE_SIZE}px; margin:.75rem 0 .5rem 0; color:{accent(0)}'>Pesquisa por Ingrediente</h3>",
-    unsafe_allow_html=True
-)
-
-# ---- inputs (labels grandes, mas escondendo labels nativos) ----
-st.markdown(
-    f"""
-    <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px; align-items:end; margin:.25rem 0 .5rem 0;">
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Ingrediente</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Marca</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Categoria</div></div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# --- helper opcional para padronizar labels colapsados ---
-def collapsed_label(lbl: str) -> dict:
-    return {"label": lbl, "label_visibility": "collapsed"}
-
-# 5) Pesquisa por Benefício — inputs (com labels acessíveis e colapsados)
-st.markdown(
-    f"""
-    <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px; align-items:end; margin:.25rem 0 .5rem 0;">
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Benefício</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Marca</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Categoria</div></div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-c1, c2, c3 = st.columns([1.3, 1, 1])
-with c1:
-    q_ben = st.text_input(
-        **collapsed_label("Benefício (pesquisa)"),
-        placeholder="Ex.: hidratação"
-    ).strip()
-
-with c2:
-    p_brand_lab = st.selectbox(
-        **collapsed_label("Marca (filtro)"),
-        options=["(todas)"] + BRAND_LABELS,
-        index=0
-    )
-
-with c3:
-    p_cat = st.selectbox(
-        **collapsed_label("Categoria (filtro)"),
-        options=CAT_OPTS,
-        index=0
-    )
-
-
-if not q_ing:
-    st.caption("Dica: pesquise um ingrediente e filtre por marca/categoria para ver os produtos correspondentes.")
-    st.stop()
-
-df_p = df.copy()
-if p_brand_lab != "(todas)":
-    val = LABEL_MAP[p_brand_lab]
-    df_p = df_p[df_p["_source_file"] == val] if uses_files else df_p[df_p["marca"] == p_brand_lab]
-if p_cat != "(todas)":
-    df_p = df_p[df_p["categoria"] == p_cat]
-
-exp_p = explode_ingredients(df_p)
-hit = exp_p[exp_p["ingrediente"].str.contains(q_ing, case=False, na=False)]
-
-if hit.empty:
-    st.info("Nenhum produto encontrado para esse ingrediente nos filtros atuais.")
-    st.stop()
-
-prods = (
-    hit.groupby("produto")
-       .agg(marca=("marca","first"),
-            categoria=("categoria","first"))
-       .reset_index()
-       .rename(columns={"produto":"Produto","marca":"Marca","categoria":"Categoria"})
-)
-
-st.markdown(f"""
-<style>
-.product-card {{
-  border: 2px solid #ececf1; border-radius: 14px;
-  padding: 14px 18px; background: #fff;
-  box-shadow: 0 2px 2px rgba(0,0,0,0.04);
-  display: grid; grid-template-columns: .4fr .6fr .8fr; gap: 18px;
-  align-items: center;
-}}
-.product-card + .product-card {{ margin-top: 12px; }}
-.p-name {{ font-weight: 800; font-size: 24px; color: {text_color()}; line-height: 1.25; }}
-.p-brand {{ font-size: 28px; color: #7a7a7a; margin-top: 2px; }}
-.p-price {{ font-weight: 1200; font-size: 28px; color: {accent(2)}; text-align: right; }}
-.p-qty   {{ font-size: 20px; color:#777; text-align: right; }}
-.p-pills {{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }}
-.pill {{
-  display:inline-block; padding: 4px 8px; border-radius: 999px;
-  border:1px solid #e5e7eb; background:#f7f7fb; color:#313244;
-  font-size: 18px; font-weight: 700;
-}}
-.pill.cat  {{ background: {accent(0)}22; border-color:{accent(0)}55; color:{accent(0)}; }}
-.pill.hit  {{ background: {accent(1)}22; border-color:{accent(1)}55; color:{accent(1)}; }}
-</style>
+# ===== Encontrar produtos por ingredientes =====
+st.markdown(f"<div class='section-title'>Encontre produtos por ingredientes</div>", unsafe_allow_html=True)
+st.markdown("""
+<div class="note-box">
+<b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais ingredientes e, opcionalmente, uma categoria.<br>
+Os produtos são organizados em grupos para facilitar a busca:<br>
+<b>APENAS: [ingrediente]</b> — produto com SOMENTE aquele ingrediente (entre os válidos/considerados).<br>
+<b>EXATAMENTE: [i1 + i2 + ...]</b> — exatamente a combinação selecionada, sem extras (entre os válidos/considerados).<br>
+<b>CONTÉM: [ingrediente]</b> — contém o ingrediente, mas também outros.
+</div>
 """, unsafe_allow_html=True)
 
-def brl(x):
-    if x is None or pd.isna(x): return "—"
-    return f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-def fmt_qtd(v, u):
-    if pd.isna(v): return "—"
-    try:
-        v = float(v)
-        vtxt = f"{int(v)}" if v.is_integer() else f"{v:.0f}" if v >= 100 else f"{v:.2f}"
-    except Exception:
-        vtxt = str(v)
-    return f"{vtxt}{(' ' + u) if isinstance(u, str) and u else ''}"
+brands_all = sorted(df["marca"].dropna().unique().tolist())
+sel_brands_search = st.multiselect("Marcas", options=brands_all, default=brands_all, key="tb_brands_ing")
 
-base = df_p[df_p["nome"].isin(prods["Produto"])].copy()
+present_ingredients = sorted({i for i in explode_ingredients(df)["ingrediente"].dropna().unique() if i})
+ingredient_options = [i for i in INGREDIENTES_VALIDOS if i in present_ingredients] if INGREDIENTES_VALIDOS else present_ingredients
+sel_ingredients = st.multiselect(
+    "Ingredientes",
+    options=ingredient_options,
+    default=ingredient_options[:2] if len(ingredient_options) >= 2 else ingredient_options,
+    key="tb_ingredients"
+)
 
-for nome_prod in prods["Produto"].tolist():
-    sub = base[base["nome"] == nome_prod]
-    if sub.empty:
-        continue
-    row = sub.iloc[0]
-    marca = row.get("marca", "—")
-    categoria = row.get("categoria", "—")
-    preco = brl(row.get("preco"))
-    qty = fmt_qtd(row.get("quantidade_valor"), row.get("quantidade_unidade"))
+cats_all_search = sorted(df[df["marca"].isin(sel_brands_search)]["categoria"].dropna().unique().tolist())
+if CATEGORY_CANONICAL_ORDER:
+    cats_all_search = [c for c in CATEGORY_CANONICAL_ORDER if c in cats_all_search] + [c for c in cats_all_search if c not in CATEGORY_CANONICAL_ORDER]
+sel_cat_search = st.selectbox("Categoria (opcional)", options=["(todas)"] + cats_all_search, index=0, key="tb_cat_ing")
 
-    exp_one = explode_ingredients(sub)
-    ing_all = exp_one["ingrediente"].dropna().unique().tolist()
-    hit_mask = exp_one["ingrediente"].str.contains(q_ing, case=False, na=False)
-    ing_hits = exp_one.loc[hit_mask, "ingrediente"].dropna().unique().tolist()
+if not sel_brands_search or not sel_ingredients:
+    st.info("Selecione ao menos uma marca e um ingrediente.")
+else:
+    base_df_search = df[df["marca"].isin(sel_brands_search)].copy()
+    if sel_cat_search != "(todas)":
+        base_df_search = base_df_search[base_df_search["categoria"] == sel_cat_search]
 
-    ing_hits_show = ing_hits[:2]
-    ing_others = [i for i in ing_all if i not in ing_hits_show][:3]
+    # Agrupar ingredientes por produto
+    by_prod_ing = []
+    for _, row in base_df_search.iterrows():
+        ingr_set = set(split_semicolon(row.get("ingredientes", "")))
+        if INGREDIENTES_VALIDOS:
+            ingr_set = {i for i in ingr_set if i in INGREDIENTES_VALIDOS}
+        by_prod_ing.append({
+            "marca": row.get("marca"),
+            "nome": row.get("nome"),
+            "categoria": row.get("categoria"),
+            "beneficios_str": row.get("beneficios", ""),  # mantido na tabela para contexto
+            "ingredientes_str": row.get("ingredientes", ""),
+            "preco": row.get("preco"),
+            "quantidade_valor": row.get("quantidade_valor"),
+            "quantidade_unidade": row.get("quantidade_unidade"),
+            "bases": ingr_set
+        })
+    by_prod_df = pd.DataFrame(by_prod_ing)
 
-    st.markdown(
-        f"""
-        <div class="product-card">
-          <div>
-            <div class="p-name">{nome_prod}</div>
-            <div class="p-brand">{marca}</div>
-          </div>
+    if by_prod_df.empty:
+        st.info("Sem dados para a seleção atual.")
+    else:
+        def classify_product_ingredients(bases: set[str], selected: list[str]) -> list[str]:
+            buckets = []
+            sel_set = set(selected)
+            for ing in selected:
+                if bases == {ing}:
+                    buckets.append(f"APENAS: {ing}")
+            if len(sel_set) > 1 and bases == sel_set:
+                ing_str = " + ".join(sorted(selected))
+                buckets.append(f"EXATAMENTE: {ing_str}")
+            for ing in selected:
+                if ing in bases and bases != {ing} and bases != sel_set:
+                    buckets.append(f"CONTÉM: {ing}")
+            return buckets
 
-          <div>
-            <div class="p-price">{preco}</div>
-            <div class="p-qty">{qty}</div>
-          </div>
+        bucket_rows = []
+        for _, row in by_prod_df.iterrows():
+            for bucket in classify_product_ingredients(row["bases"], sel_ingredients):
+                d = row.to_dict()
+                d["bucket"] = bucket
+                bucket_rows.append(d)
 
-          <div class="p-pills">
-            <span class="pill cat">{categoria}</span>
-            {''.join(f'<span class="pill hit">{i}</span>' for i in ing_hits_show)}
-            {''.join(f'<span class="pill">{i}</span>' for i in ing_others)}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        if not bucket_rows:
+            st.info("Nenhum produto atende à seleção.")
+        else:
+            by_prod_exploded = pd.DataFrame(bucket_rows)
+
+            bucket_order = []
+            if len(sel_ingredients) > 1:
+                bucket_order.append("EXATAMENTE: " + " + ".join(sorted(sel_ingredients)))
+            for i in sel_ingredients:
+                bucket_order.append(f"APENAS: {i}")
+            for i in sel_ingredients:
+                bucket_order.append(f"CONTÉM: {i}")
+
+            # Tabelas por marca
+            for marca in sel_brands_search:
+                sub = by_prod_exploded[by_prod_exploded["marca"] == marca]
+                if sub.empty:
+                    continue
+
+                st.markdown(f"<div class='brand-header'>{marca}</div>", unsafe_allow_html=True)
+
+                for bucket in bucket_order:
+                    tb = sub[sub["bucket"] == bucket].copy()
+                    if tb.empty:
+                        continue
+
+                    st.markdown(f"<div class='bucket-title'>{bucket}</div>", unsafe_allow_html=True)
+
+                    tb["Preço"] = tb["preco"].apply(fmt_price)
+                    tb["Quantidade"] = tb.apply(lambda r: fmt_qtd(r["quantidade_valor"], r["quantidade_unidade"]), axis=1)
+
+                    display_tb = tb[["nome","categoria","Quantidade","Preço","ingredientes_str","beneficios_str"]].rename(columns={
+                        "nome": "Produto",
+                        "categoria": "Categoria",
+                        "ingredientes_str": "Ingredientes",
+                        "beneficios_str": "Benefícios"
+                    }).fillna("—").drop_duplicates()
+
+                    st.dataframe(display_tb, width="stretch", hide_index=True)
+
+            # Gráficos após as tabelas
+            st.markdown("---")
+            st.markdown("### Visualizações resumidas da sua seleção")
+            st.markdown("""
+<div class="note-box">
+<b>O que você vê aqui?</b><br>
+• <b>Por marca × bucket</b>: quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).
+</div>
+""", unsafe_allow_html=True)
+
+            agg_bucket = (
+                by_prod_exploded
+                .groupby(["marca","bucket"])["nome"]
+                .nunique()
+                .reset_index(name="produtos")
+            )
+            agg_bucket["bucket"] = pd.Categorical(agg_bucket["bucket"], categories=bucket_order, ordered=True)
+            agg_bucket = agg_bucket.sort_values(["bucket","marca"])
+
+            bar_mode = st.radio("Modo", ["Empilhado", "Agrupado"], horizontal=True, key="g_sum_mode_ing")
+            barmode = "stack" if bar_mode == "Empilhado" else "group"
+
+            fig_sum = px.bar(
+                agg_bucket, x="marca", y="produtos", color="bucket", barmode=barmode,
+                color_discrete_sequence=SEQ,
+                labels={"marca":"Marca", "produtos":"Nº de produtos", "bucket":"Grupo"},
+            )
+            fig_sum.update_traces(
+                hovertemplate="<b>%{x}</b><br>Grupo: <b>%{fullData.name}</b><br>Produtos: <b>%{y}</b><extra></extra>"
+            )
+            fig_sum.update_layout(
+                height=720,
+                margin=dict(t=40, b=80, l=20, r=260),
+                legend=dict(font=dict(size=LEGEND_FONT_SIZE), itemwidth=90),
+                xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+                yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+                hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE)
+            )
+            st.plotly_chart(fig_sum, width="stretch")
+
+st.markdown("---")

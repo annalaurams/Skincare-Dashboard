@@ -4,7 +4,6 @@ CATEGORY_CANONICAL_ORDER = [
     "balm demaquilante",
     "bruma",
     "bastão",
-    "calmante",
     "clareador",
     "creme",
     "gel de limpeza",
@@ -19,7 +18,6 @@ CATEGORY_CANONICAL_ORDER = [
     "spray",
     "sérum",
     "tônico",
-    "tônico esfoliante",
     "tratamento antiacne",
     "tratamento para área dos olhos",
     "super",
@@ -29,26 +27,19 @@ CATEGORY_CANONICAL_ORDER = [
 
 CATEGORY_HINTS = {
 
-       "bastão": ["bastão","stick","bastão facial","bastão anti"],
 
         "óleo de limpeza": ["cleansing oil","oleo de limpeza","óleo demaquilante","oil cleanser","oleo facial","óleo facial","face oil" ],
         "balm demaquilante": ["balm demaquilante","cleansing balm","sorbet demaquilante","butter cleanser"],
         "água micelar": ["agua micelar","micellar water"],
         "gel de limpeza": ["gel de limpeza","gel cleanser","gel facial","gel purificante","control oil", "limpador", "limpeza facial"],
-        "espuma": ["espuma de limpeza","mousse de limpeza","foam cleanser","espuma facial"],
-        "sabonete": ["sabonete facial","barra facial","bar cleanser"],
         "tônico": ["tonico","tônico","essencia","essência","essence","loção facial","lotion facial","softener","skin"],
  
-        "tônico esfoliante": ["tonico esfoliante","peeling toner","aha","bha","pha","ácido esfoliante"],
         "sérum": ["serum","sérum","booster","concentrado","elixir", "ácido"],
-        "ampola/ampoule": ["ampola","ampoule","vial","shot facial"],
  
         "hidratante": ["hidratante","moisturizer", "creme hidratante","creme de hidratação"],
         "gel-creme": ["gel creme","gel-creme","gelcream","aqua gel"],
         "creme": ["creme facial","creme nutritivo","creme rico"],
-        "loção": ["locao facial","loção facial","lotion facial"],
         "máscara facial": ["mascara facial","sheet mask","mask facial","mascara de argila","clay mask","sleeping mask","máscara noturna","máscara de dormir","overnight mask"],
-        "recuperador": ["repair","restaurador","reparador","skin barrier","ceramide barrier"],
         
         "tratamento para área dos olhos": ["contorno dos olhos","eye cream","eye serum","olheiras","bolsas","area dos olhos","área dos olhos"],
         "hidratante labial": ["hidratante labial","lip balm","protetor labial", "cacau"],
@@ -56,15 +47,11 @@ CATEGORY_HINTS = {
  
         "tratamento antiacne": ["antiacne","anti acne","gel secativo","spot","acne","espinha","cravo"],
         "clareador": ["antimanchas","anti manchas","clareador","dark spot","brightening","melasma","spot clareador", "gel clareador", "clareador localizado", "anti-mancha pontual", "dark spot corrector"],
-        "antissinais": ["antissinais","anti-idade","anti idade","rugas","firmeza","firmador","lifting","tensor"],
         "controle de oleosidade": ["matificante","efeito matte","oil control","controle do brilho"],
-        "calmante": ["calmante","sensibilidade","soothing","anti-residuo","antirresiduo","vermelhidão", "vermelhidao", "irritacao","irritação"],
         "protetor solar": ["protetor solar","sunscreen","fps","spf","uva","uvb","filtro solar","sun stick","sun gel"],
         "primer": ["primer","grip primer","blur primer"],
         "bruma": ["bruma facial","bruma","fix mist","setting mist"],
         "spray": ["spray hidratante","névoa","nevoa","hydrating mist","mist hidratante"],
-        "vitamina": ["vitamina","vitamin","vitaminas","vitaminado"],
-        "peeling químico": ["peeling", "peeling químico", "solução peeling", "peeling noturno", "aha", "bha", "ácido peeling"],
         "super": ["super", "superficial", "superfície", "superfície da pele"],
         "em pó": ["em pó", "powder", "pó facial", "pó solto", "pó compacto", "pó de limpeza"]
     }

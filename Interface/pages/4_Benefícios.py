@@ -1,30 +1,19 @@
+# pages/4_Benefícios.py
 from __future__ import annotations
-import sys
-from pathlib import Path
-from typing import List
-import numpy as np
-import pandas as pd
-import streamlit as st
-import plotly.express as px
 
-from core.data import load_data
-from core.theme import apply_base_theme, apply_palette_css, color_sequence
+# ---- Base centralizada: st, pd, px, load_data, color_sequence, modelos, np, Path, List etc. ----
+from include import *
 
-MODELS_DIR = "/home/usuario/Área de trabalho/Dados/models"
-sys.path.append(MODELS_DIR)
-try:
-    from category import CATEGORY_CANONICAL_ORDER 
-except Exception:
-    CATEGORY_CANONICAL_ORDER = []
-try:
-    from benefit import BENEFICIOS_VALIDOS  
-except Exception:
-    BENEFICIOS_VALIDOS = []
+# ===== Config local só da paleta (NÃO chamar set_page_config/apply_base_theme aqui) =====
+if "palette_name" not in st.session_state:
+    st.session_state["palette_name"] = "Solaris"
 
-st.set_page_config(page_title="Skincare • Benefícios", page_icon="✨", layout="wide")
+apply_palette_css(st.session_state["palette_name"])
+SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f3"]
 
-TITLE_TEXT           = "Benefícios por Marca e Categoria"
-TAGLINE_TEXT         = "Veja os benefícios mais presentes, compare marcas e descubra diferenciais por categoria."
+# ===== Constantes visuais da página =====
+TITLE_TEXT           = "Benefícios: O que os Produtos Prometem"
+TAGLINE_TEXT         = "Veja quais benefícios mais se destacam nas formulações e os efeitos mais comuns entre os produtos das marcas"
 TITLE_SIZE           = 60
 TAGLINE_SIZE         = 26
 
@@ -33,29 +22,43 @@ SUBTITLE_SIZE        = 22
 
 CHART_HEIGHT         = 680
 LEGEND_FONT_SIZE     = 30
-TOOLTIP_FONT_SIZE    = 26
-AXIS_TITLE_SIZE      = 24
+TOOLTIP_FONT_SIZE    = 24
+AXIS_TITLE_SIZE      = 26
 AXIS_TICK_SIZE       = 22
-BAR_TEXT_SIZE        = 18
+BAR_TEXT_SIZE        = 20
+PIE_TEXT_SIZE        = 20
 
 WIDGET_HEIGHT_PX     = 48
+
+def accent(i=0): return SEQ[i % len(SEQ)]
+def accent2(): return SEQ[1] if len(SEQ) > 1 else "#22c55e"
+def text_color(): return "#262730"
+def subtext_color(): return "#555"
+def neutral_border(): return "#ebedf0"
+def panel_bg(): return "#ffffff"
+
 
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
 
 apply_base_theme()
 apply_palette_css(st.session_state["palette_name"])
-SEQ = color_sequence(st.session_state["palette_name"])
+SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f3"]
 
-def accent(i=0): return SEQ[i % len(SEQ)] if SEQ else "#6e56cf"
+def accent(i=0): return SEQ[i % len(SEQ)]
+def accent2(): return SEQ[1] if len(SEQ) > 1 else "#22c55e"
 def text_color(): return "#262730"
 def subtext_color(): return "#555"
+def neutral_border(): return "#ebedf0"
 def panel_bg(): return "#ffffff"
 
+# CSS
 st.markdown(f"""
 <style>
 .section-title {{ font-size:{SECTION_TITLE_SIZE}px; font-weight:700; color:{text_color()}; margin: 1rem 0 .5rem 0; }}
 .subtle       {{ font-size:{TAGLINE_SIZE}px; color:{subtext_color()}; }}
+
+/* Altura e fonte dos selects/inputs */
 .stSelectbox div[role="combobox"],
 .stMultiSelect div[role="combobox"],
 .stTextInput input, .stTextInput textarea {{
@@ -64,19 +67,121 @@ st.markdown(f"""
     font-size: 18px !important;
 }}
 div[data-baseweb="select"] {{ width: 100% !important; }}
-[data-testid="stDataFrame"] thead tr th {{
-    background: linear-gradient(90deg, {accent(0)}22, {accent(1)}22) !important;
-    color: {text_color()} !important;
-    font-weight: 800 !important;
-    font-size: 16px !important;
+
+/* Label dos widgets (ex.: 'Visualização', 'Modo', etc.) maior */
+div[data-testid="stWidgetLabel"] p {{
+    font-size: 20px !important;
 }}
-[data-testid="stDataFrame"] tbody td {{ font-size: 16px !important; }}
+
+/* Opções dos radios maiores (Barras / Rosca / Orientação etc.) */
+.stRadio label span {{
+    font-size: 18px !important;
+}}
+
+/* Botões da distribuição */
+.dist-nav .stButton>button {{
+    background: {accent(0)}22 !important;
+    border: 2px solid {accent(0)} !important;
+    color: {text_color()} !important;
+    padding: 12px 22px !important;
+    height: 52px !important;
+    font-size: 19px !important;
+    border-radius: 14px !important;
+}}
+
+/* NOTAS / MODE DESCRIPTION — sem borda colorida */
+.note-box {{
+    background: #f8f9fa;
+    border: 1px solid {neutral_border()};
+    border-left: none;
+    padding: 1rem;
+    margin: 1rem 0 1.25rem 0;
+    border-radius: 10px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: {subtext_color()};
+}}
+.note-box b {{ color: {text_color()}; }}
+
+/* Cabeçalho de marca (igual Tipos de pele) */
+.brand-header {{
+    background: linear-gradient(135deg, {accent(0)} 0%, {accent2()} 100%);
+    color: #fff;
+    padding: 18px 24px;
+    border-radius: 14px;
+    font-size: 28px;
+    font-weight: 900;
+    margin: 32px 0 16px 0;
+    box-shadow: 0 4px 12px {accent(0)}40;
+}}
+
+/* Buckets com tarja suave */
+.bucket-title {{
+    background: {accent(0)}15;
+    color: {accent(0)};
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 20px;
+    font-weight: 800;
+    margin: 16px 0 12px 0;
+    border-left: 5px solid {accent(0)};
+}}
+
+/* DataFrame no padrão Tipos de pele (sem borda colorida) */
+div[data-testid="stDataFrame"] {{
+    border: 1px solid {neutral_border()} !important;
+    border-radius: 12px !important;
+    overflow: visible !important;
+}}
+div[data-testid="stDataFrame"] table {{
+    font-size: 16px !important;
+    line-height: 1.45 !important;
+}}
+div[data-testid="stDataFrame"] thead th {{
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    padding: 10px 14px !important;
+    background-color: #fafafa !important;
+    color: {text_color()} !important;
+    white-space: nowrap !important;
+}}
+div[data-testid="stDataFrame"] tbody td {{
+    padding: 10px 14px !important;
+    font-size: 26px !important;
+    white-space: normal !important;
+    vertical-align: top !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
-def collapsed_label(lbl: str) -> dict:
-    """Mantém label acessível e esconde visualmente (sem warnings)."""
-    return {"label": lbl, "label_visibility": "collapsed"}
+st.markdown("""
+<style>
+/* ===== Ajuste do tamanho da fonte dentro das tabelas ===== */
+
+/* texto dentro das células da tabela */
+div[data-testid="stDataFrame"] tbody td div {
+    font-size: 42px !important;      /* 🔹 aumenta aqui o tamanho dos dados (ex: 24px, 26px, etc.) */
+    line-height: 1.5 !important;     /* altura da linha */
+    white-space: normal !important;  /* quebra de linha quando o texto é longo */
+    overflow: visible !important;
+}
+
+/* cabeçalho da tabela (Produto, Categoria, etc.) */
+div[data-testid="stDataFrame"] thead th div {
+    font-size: 42px !important;      /* 🔹 tamanho do texto do cabeçalho */
+    font-weight: 700 !important;
+}
+
+/* espaçamento geral da tabela */
+div[data-testid="stDataFrame"] table {
+    border-collapse: separate !important;
+    border-spacing: 0 6px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+def alpha_sorted(opts: List[str]) -> List[str]:
+    return sorted([o for o in opts if isinstance(o, str)], key=lambda s: s.casefold())
 
 def _pretty_from_source(fname: str) -> str:
     stem = Path(fname).stem
@@ -85,14 +190,18 @@ def _pretty_from_source(fname: str) -> str:
     return stem.replace("_", " ").title()
 
 def split_semicolon(s: str) -> List[str]:
-    if not isinstance(s, str) or not s.strip():
-        return []
-    return [p.strip() for p in s.split(";") if p.strip()]
+    if not isinstance(s, str) or not s.strip(): return []
+    parts = [p.strip() for chunk in s.split(";") for p in chunk.split(",")]
+    return [p for p in parts if p]
 
 def explode_benefits(df_in: pd.DataFrame) -> pd.DataFrame:
-    """Explode de benefícios; se houver lista oficial, filtra por ela."""
+    cols = ["beneficio","produto","marca","categoria","preco",
+            "quantidade_valor","quantidade_unidade","image_url","_source_file"]
     rows = []
-    valid = set(BENEFICIOS_VALIDOS) if BENEFICIOS_VALIDOS else None
+    valid = set(BENEFIT_CANONICAL_ORDER) if BENEFIT_CANONICAL_ORDER else None
+    if df_in is None or df_in.empty:
+        return pd.DataFrame(columns=cols)
+
     for _, r in df_in.iterrows():
         for ben in split_semicolon(r.get("beneficios", "")):
             if valid is not None and ben not in valid:
@@ -106,71 +215,72 @@ def explode_benefits(df_in: pd.DataFrame) -> pd.DataFrame:
                 "quantidade_valor": r.get("quantidade_valor"),
                 "quantidade_unidade": r.get("quantidade_unidade"),
                 "image_url": r.get("image_url") or r.get("imagem_url") or r.get("imagem"),
+                "_source_file": r.get("_source_file"),
             })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=cols)
 
-def pct_str(value: float, total: float) -> str:
+def fmt_price(v):
     try:
-        v = float(value) / float(max(total, 1))
-        return f"{100*v:.1f}%"
+        x = float(v); 
+        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except Exception:
         return "—"
 
-def brl(x):
-    if x is None or pd.isna(x): return "—"
-    return f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 def fmt_qtd(v, u):
     if pd.isna(v): return "—"
     try:
-        v = float(v)
-        vtxt = f"{int(v)}" if v.is_integer() else f"{v:.0f}" if v >= 100 else f"{v:.2f}"
-    except Exception:
-        vtxt = str(v)
-    return f"{vtxt}{(' ' + u) if isinstance(u, str) and u else ''}"
+        v_float = float(v)
+        v_str = f"{int(v_float)}" if v_float.is_integer() else f"{v_float:.2f}"
+    except:
+        v_str = str(v)
+    return f"{v_str} {u}" if pd.notna(u) and str(u).strip() else v_str
 
-#  Dados 
+# Carrega dados & opções
 df = load_data()
 
 uses_files = "_source_file" in df.columns and df["_source_file"].notna().any()
 if uses_files:
-    files = sorted(df["_source_file"].dropna().unique().tolist())
+    files = alpha_sorted(df["_source_file"].dropna().unique().tolist())
     LABEL_MAP = { _pretty_from_source(f): f for f in files }  # label -> arquivo
     BRAND_LABELS = list(LABEL_MAP.keys())
 else:
-    brands_col = sorted(df["marca"].dropna().unique().tolist()) if "marca" in df.columns else []
+    brands_col = alpha_sorted(df["marca"].dropna().unique().tolist()) if "marca" in df.columns else []
     LABEL_MAP = { b: b for b in brands_col }
     BRAND_LABELS = list(LABEL_MAP.keys())
 
-CAT_CANON = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else []
-CAT_PRESENT = sorted(df["categoria"].dropna().unique().tolist())
-CAT_OPTS = ["(todas)"] + (CAT_CANON if CAT_CANON else CAT_PRESENT)
+CAT_ALL  = alpha_sorted(CATEGORY_CANONICAL_ORDER or df.get("categoria", pd.Series(dtype=str)).dropna().unique().tolist())
+BEN_ALL  = alpha_sorted(BENEFIT_CANONICAL_ORDER or [])
+SKIN_ALL = alpha_sorted(SKIN_TYPE_CANONICAL_ORDER or [])
 
 st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
-st.markdown(f"<div class='subtle' style='margin:.5rem 0 1.25rem 0;'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='subtle' style='margin:.5rem 0 .75rem 0;'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
 
+st.markdown("""
+<div class="note-box">
+<b>Nota:</b> Este painel consolida dados coletados dos sites oficiais das marcas brasileiras analisadas.
+Filtros e contagens consideram <i>produtos distintos</i>. Algumas informações podem ter sido complementadas manualmente quando ausentes.
+</div>
+""", unsafe_allow_html=True)
+
+# Filtros principais
 st.markdown(f"<div class='section-title'>Filtros</div>", unsafe_allow_html=True)
-fc1, fc2, fc3 = st.columns([1.1, 1, 1.2])
+fc1, fc2 = st.columns([1.1, 1])
 with fc1:
-    sel_brand_label = st.selectbox(**collapsed_label("Marca (obrigatório)"),
-                                   options=BRAND_LABELS, index=0 if BRAND_LABELS else None)
+    sel_brand_label = st.selectbox("Marca (obrigatório)", options=BRAND_LABELS, index=0 if BRAND_LABELS else None)
     sel_brand_value = LABEL_MAP.get(sel_brand_label) if sel_brand_label else None
 with fc2:
-    sel_cat = st.selectbox(**collapsed_label("Categoria (opcional)"), options=CAT_OPTS, index=0)
-with fc3:
-    search_ben = st.text_input(**collapsed_label("Busca rápida (opcional)"), value="").strip()
+    sel_cat = st.selectbox("Categoria (opcional)", options=["(todas)"] + CAT_ALL, index=0)
 
 if sel_brand_value is None:
     st.info("Selecione uma marca.")
     st.stop()
 
-if uses_files:
-    df_brand = df[df["_source_file"] == sel_brand_value].copy()
-else:
-    df_brand = df[df["marca"] == sel_brand_label].copy()
+# Base da marca
+df_brand = df[df["_source_file"] == sel_brand_value].copy() if uses_files else df[df["marca"] == sel_brand_label].copy()
 if sel_cat != "(todas)":
     df_brand = df_brand[df_brand["categoria"] == sel_cat]
 
-# Resumo 
+# Resumo
 KPI_BORDER_PX = 3
 def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
     st.markdown(
@@ -182,10 +292,10 @@ def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
             background:{panel_bg()};
         ">
           <div style="color:{subtext_color()}; font-size:{SUBTITLE_SIZE}px;">{title}</div>
-          <div style="font-weight:800; font-size:28px; color:{text_color()}; line-height:1; margin-top:4px;">
+          <div style="font-weight:400; font-size:28px; color:{text_color()}; line-height:1; margin-top:4px;">
             {value}
           </div>
-          <div style="color:{subtext_color()}; margin-top:2px;">{subtitle}</div>
+          <div style="color:{subtext_color()}; margin-top:2px; font-size:18px;">{subtitle}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -194,439 +304,354 @@ def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
 st.markdown(f"<div class='section-title'>Resumo</div>", unsafe_allow_html=True)
 
 exp_brand = explode_benefits(df_brand)
-total_ben_distintos = exp_brand["beneficio"].nunique() if not exp_brand.empty else 0
 
-# benefício mais usado
 if exp_brand.empty:
     top_ben, top_count = "—", 0
 else:
-    top_s = (exp_brand.groupby("beneficio")["produto"].nunique()
-             .sort_values(ascending=False))
-    top_ben = top_s.index[0]; top_count = int(top_s.iloc[0])
+    top_s = exp_brand.groupby("beneficio")["produto"].nunique().sort_values(ascending=False)
+    top_ben = top_s.index[0]
+    top_count = int(top_s.iloc[0])
 
-# benefício exclusivo na marca (só ela possui)
-exp_all = explode_benefits(df)
+exp_all = explode_benefits(df.copy())
 exclusivos = []
-if not exp_brand.empty:
+if not exp_brand.empty and not exp_all.empty:
     set_marca = set(exp_brand["beneficio"].unique())
-    by_brand = exp_all.groupby(["beneficio"])["marca"].nunique()
+    key = "marca" if "marca" in exp_all.columns else "_source_file"
+    by_brand = exp_all.groupby("beneficio")[key].nunique()
     exclusivos = [b for b in set_marca if by_brand.get(b, 0) == 1]
 ex_ben = exclusivos[0] if exclusivos else "—"
 
-k1, k2, k3 = st.columns(3)
-with k1:
-    summary_card("Benefícios distintos", str(total_ben_distintos), "na marca selecionada", color_idx=0)
-with k2:
+kc1, kc2 = st.columns(2)
+with kc1:
     summary_card("Benefício mais usado", top_ben, f"{top_count} produto(s)", color_idx=1)
-with k3:
-    summary_card("Benefício exclusivo", ex_ben, "apenas nesta marca", color_idx=2)
+with kc2:
+    summary_card("Benefício exclusivo", ex_ben, "apenas nesta marca (no dataset)", color_idx=2)
 
 st.markdown("---")
 
-#  1) Distribuição de Benefícios — Barras/Rosca (+ filtro) 
-st.markdown(f"<div class='section-title'>Distribuição de Benefícios</div>", unsafe_allow_html=True)
+# Distribuição de Benefícios (paginada)
+st.markdown(f"<div class='section-title'>Distribuição de Benefícios (paginada)</div>", unsafe_allow_html=True)
 
-exp_dist = explode_benefits(df_brand)
-total_produtos_contexto = df_brand["nome"].nunique()
+if "ben_dist_page" not in st.session_state: st.session_state["ben_dist_page"] = 1
 
-if BENEFICIOS_VALIDOS:
-    ben_present = [b for b in BENEFICIOS_VALIDOS if b in set(exp_dist["beneficio"].unique())]
-else:
-    ben_present = sorted(exp_dist["beneficio"].dropna().unique().tolist()) if not exp_dist.empty else []
+#  botões alinhados na mesma linha
+col_sel, col_prev, col_next, _ = st.columns([1.0, 0.6, 0.8, 6])
+with col_sel:
+    page_size = st.selectbox("Itens por página", options=[10, 15, 20, 25, 30], index=1, key="ben_page_size")
+with col_prev:
+    st.markdown('<div class="dist-nav">', unsafe_allow_html=True)
+    prev = st.button("Anterior", key="ben_prev")
+    st.markdown('</div>', unsafe_allow_html=True)
+with col_next:
+    st.markdown('<div class="dist-nav">', unsafe_allow_html=True)
+    next_ = st.button("Próxima", key="ben_next")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-c1, c2 = st.columns([1.0, 1.0])
-with c1:
-    view_opt = st.radio(**collapsed_label("Visualização (benefícios)"),
-                        options=["Barras", "Rosca"], horizontal=True, key="ben_view")
-with c2:
-    ben_mode = st.radio(**collapsed_label("Benefícios (modo)"),
-                        options=["(Todos)", "Selecionar"], horizontal=True, key="ben_mode")
-
-sel_bens_multi: List[str] = []
-if ben_mode == "Selecionar":
-    sel_bens_multi = st.multiselect(**collapsed_label("Benefícios (seleção múltipla)"),
-                                    options=ben_present, default=ben_present[:10])
-
-# aplica “Busca rápida” e seleção multi
-if search_ben:
-    exp_dist = exp_dist[exp_dist["beneficio"].str.contains(search_ben, case=False, na=False)]
-if ben_mode == "Selecionar" and sel_bens_multi:
-    exp_dist = exp_dist[exp_dist["beneficio"].isin(sel_bens_multi)]
-
-if exp_dist.empty or total_produtos_contexto == 0:
+if exp_brand.empty:
     st.info("Sem dados para exibir a distribuição.")
 else:
-    by_ben = (exp_dist.groupby("beneficio")["produto"]
-              .nunique().reset_index(name="qtd_produtos"))
-    by_ben["pct"] = by_ben["qtd_produtos"] / float(total_produtos_contexto)
-    by_ben = by_ben.sort_values(["qtd_produtos", "beneficio"], ascending=[False, True])
+    dist = (exp_brand.groupby("beneficio")["produto"].nunique().reset_index(name="qtd_produtos"))
+    dist = dist.sort_values(["qtd_produtos", "beneficio"], ascending=[False, True]).reset_index(drop=True)
 
-    if view_opt == "Barras":
-        fig = px.bar(
-            by_ben, x="beneficio", y="qtd_produtos",
-            text="qtd_produtos",
+    total_pages = max(1, int(np.ceil(len(dist) / page_size)))
+    if prev: st.session_state["ben_dist_page"] = max(1, st.session_state["ben_dist_page"] - 1)
+    if next_: st.session_state["ben_dist_page"] = min(total_pages, st.session_state["ben_dist_page"] + 1)
+
+    start = (st.session_state["ben_dist_page"] - 1) * page_size
+    end = start + page_size
+    page_df = dist.iloc[start:end].copy()
+
+    total_produtos_contexto = df_brand["nome"].nunique() if "nome" in df_brand.columns else 0
+    page_df["pct"] = page_df["qtd_produtos"] / float(max(total_produtos_contexto, 1))
+
+    fig = px.bar(
+        page_df, x="beneficio", y="qtd_produtos",
+        text="qtd_produtos",
+        color="beneficio", color_discrete_sequence=SEQ,
+        labels={"beneficio": "Benefício", "qtd_produtos": "Produtos"}
+    )
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(size=BAR_TEXT_SIZE),
+        hovertemplate="<b>%{x}</b><br>Produtos: %{y} de " + str(total_produtos_contexto) +
+                      "<br>Participação: %{customdata[0]}<extra></extra>",
+        customdata=np.array([[f"{100*p:.1f}%"] for p in page_df["pct"]])
+    )
+    fig.update_layout(
+        height=CHART_HEIGHT,
+        showlegend=False,
+        bargap=0.12,
+        xaxis_tickangle=-20,
+        xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+        yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+        hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
+        margin=dict(t=40, b=120, l=30, r=20),
+        title=f"Página {st.session_state['ben_dist_page']} de {total_pages}"
+    )
+    st.plotly_chart(fig, width="stretch")
+
+st.markdown("---")
+
+# Top 3 benefícios da marca (todos os produtos)
+st.markdown(f"<div class='section-title'>Top 3 Benefícios da Marca (todos os produtos)</div>", unsafe_allow_html=True)
+
+df_brand_all = df[df["_source_file"] == sel_brand_value].copy() if uses_files else df[df["marca"] == sel_brand_label].copy()
+exp_brand_all = explode_benefits(df_brand_all)
+
+if exp_brand_all.empty:
+    st.info("Sem dados para calcular o Top 3.")
+    TOP3 = []
+else:
+    top3 = (exp_brand_all.groupby("beneficio")["produto"]
+            .nunique().sort_values(ascending=False).head(3).reset_index(name="produtos"))
+    TOP3 = top3["beneficio"].tolist()
+    total_prod = df_brand_all["nome"].nunique()
+    top3["pct"] = top3["produtos"] / float(max(total_prod, 1))
+
+    chart_choice = st.radio("Visualização", options=["Barras", "Rosca (%)"], horizontal=True, index=0)
+    if chart_choice == "Barras":
+        fig_top = px.bar(
+            top3, x="beneficio", y="produtos", text="produtos",
             color="beneficio", color_discrete_sequence=SEQ,
-            labels={"beneficio": "Benefício", "qtd_produtos": "Quantos Produtos"},
-            hover_data={}
+            labels={"beneficio": "Benefício", "produtos": "Produtos"}
         )
-        fig.update_traces(
-            textposition="outside",
-            textfont=dict(size=BAR_TEXT_SIZE, color="#363636"),
-            hovertemplate="<b>%{x}</b><br>Produtos: %{y} de " + str(total_produtos_contexto) +
-                          "<br>Participação: %{customdata[0]}<extra></extra>",
-            customdata=np.array([[pct_str(v, total_produtos_contexto)] for v in by_ben["qtd_produtos"]])
-        )
-        fig.update_layout(
-            height=CHART_HEIGHT, showlegend=False,
+        fig_top.update_traces(textposition="outside", textfont=dict(size=BAR_TEXT_SIZE))
+        fig_top.update_layout(
+            height=CHART_HEIGHT//1.2, showlegend=False, bargap=0.12,
             xaxis_tickangle=-20,
             xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
             margin=dict(t=40, b=120, l=30, r=20)
         )
-        st.plotly_chart(fig, use_container_width=True)
     else:
-        figp = px.pie(
-            by_ben, names="beneficio", values="qtd_produtos",
-            hole=0.55, color_discrete_sequence=SEQ
+        fig_top = px.pie(
+            top3, names="beneficio", values="pct",
+            hole=0.45, color="beneficio", color_discrete_sequence=SEQ
         )
-        figp.update_traces(
-            textposition="inside", texttemplate="%{percent:.1%}",
-            hovertemplate="<b>%{label}</b><br>Produtos: %{value} de " + str(total_produtos_contexto) +
-                          "<br>Participação: %{percent:.1%}<extra></extra>"
-        )
-        figp.update_layout(
-            height=CHART_HEIGHT,
-            legend=dict(font=dict(size=LEGEND_FONT_SIZE)),
-            hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
-            margin=dict(t=40, b=40, l=40, r=40)
-        )
-        st.plotly_chart(figp, use_container_width=True)
+        fig_top.update_traces(texttemplate="%{label}<br>%{percent:.1%}", textfont_size=PIE_TEXT_SIZE)
+        fig_top.update_layout(height=CHART_HEIGHT//1.2, legend=dict(font=dict(size=LEGEND_FONT_SIZE)))
+    st.plotly_chart(fig_top, width="stretch")
 
 st.markdown("---")
 
-#  2) Top 5 Benefícios 
-st.markdown(f"<div class='section-title'>Top 5 Benefícios</div>", unsafe_allow_html=True)
+# Comparação de benefícios entre marcas (Top 3)
+st.markdown(f"<div class='section-title'>Comparação de Benefícios entre Marcas (Top 3)</div>", unsafe_allow_html=True)
 
-if exp_dist.empty or total_produtos_contexto == 0:
-    st.info("Sem dados para exibir o Top 5.")
-else:
-    top5 = (exp_dist.groupby("beneficio")["produto"].nunique()
-            .reset_index(name="qtd_produtos")
-            .sort_values(["qtd_produtos", "beneficio"], ascending=[False, True])
-            .head(5))
-    top5["pct"] = top5["qtd_produtos"] / float(total_produtos_contexto)
+brand_opts = ["(todas)"] + BRAND_LABELS
+sel_brands = st.multiselect("Marcas", options=brand_opts, default=[sel_brand_label], key="ben_comp_brands")
 
-    figt = px.bar(
-        top5.sort_values(["qtd_produtos","beneficio"], ascending=[True, True]),
-        x="qtd_produtos", y="beneficio",
-        orientation="h",
-        text="qtd_produtos",
-        color="beneficio", color_discrete_sequence=SEQ,
-        labels={"qtd_produtos": "Quantidade de Produtos", "beneficio": "Benefício"},
-        hover_data={}
-    )
-    figt.update_traces(
-        textposition="outside",
-        textfont=dict(size=BAR_TEXT_SIZE, color="#363636"),
-        hovertemplate="<b>%{y}</b><br>Produtos: %{x} de " + str(total_produtos_contexto) +
-                      "<br>Participação: %{customdata[0]}<extra></extra>",
-        customdata=np.array([[pct_str(v, total_produtos_contexto)] for v in top5["qtd_produtos"]])
-    )
-    figt.update_layout(
-        height=CHART_HEIGHT//1.4, showlegend=False,
-        xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
-        yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
-        hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
-        margin=dict(t=40, b=40, l=140, r=40)
-    )
-    st.plotly_chart(figt, use_container_width=True)
+if "(todas)" in sel_brands:
+    sel_brands = BRAND_LABELS[:]
+elif not sel_brands:
+    sel_brands = [sel_brand_label]
 
-st.markdown("---")
-
-#  3) Benefícios por Categoria (heatmap) com seleção 1..10 
-st.markdown(f"<div class='section-title'>Benefícios por Categoria</div>", unsafe_allow_html=True)
-
-if uses_files:
-    exp_brand_allcats = explode_benefits(df[df["_source_file"] == sel_brand_value])
-else:
-    exp_brand_allcats = explode_benefits(df[df["marca"] == sel_brand_label])
-
-if exp_brand_allcats.empty:
-    st.info("Sem benefícios para construir o mapa por categoria.")
-    st.stop()
-
-cat_all = exp_brand_allcats["categoria"].dropna().unique().tolist()
-if CATEGORY_CANONICAL_ORDER:
-    can_set = set(CATEGORY_CANONICAL_ORDER)
-    cat_sorted = [c for c in CATEGORY_CANONICAL_ORDER if c in cat_all] + [c for c in sorted(cat_all) if c not in can_set]
-else:
-    cat_sorted = sorted(cat_all)
-
-default_cats = cat_sorted[:min(10, len(cat_sorted))]
-sel_cats_hm = st.multiselect(
-    **collapsed_label("Categorias (heatmap)"),
-    options=cat_sorted,
-    default=default_cats,
-    max_selections=10,
-    help="Escolha de 1 a 10 categorias para o mapa de calor."
-)
-if not sel_cats_hm:
-    st.warning("Selecione pelo menos uma categoria para exibir o mapa.")
-    st.stop()
-
-exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["categoria"].isin(sel_cats_hm)]
-
-if ben_mode == "Selecionar" and sel_bens_multi:
-    exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["beneficio"].isin(sel_bens_multi)]
-elif search_ben:
-    exp_brand_allcats = exp_brand_allcats[exp_brand_allcats["beneficio"].str.contains(search_ben, case=False, na=False)]
-
-if exp_brand_allcats.empty:
-    st.info("Sem benefícios para o mapa por categoria com os filtros atuais.")
-else:
-    if ben_mode == "Selecionar" and sel_bens_multi:
-        ben_focus = sel_bens_multi
-    else:
-        N_TOP = 12
-        ben_focus = (exp_brand_allcats.groupby("beneficio")["produto"]
-                     .nunique().sort_values(ascending=False).head(N_TOP).index.tolist())
-
-    sub = exp_brand_allcats[exp_brand_allcats["beneficio"].isin(ben_focus)]
-    pivot = (sub.groupby(["categoria", "beneficio"])["produto"]
-             .nunique().unstack(fill_value=0))
-
-    pivot = pivot.loc[[c for c in sel_cats_hm if c in pivot.index], :]
-
-    n_seq = len(SEQ)
-    if n_seq >= 18:
-        block = n_seq // 4
-        third_line = SEQ[2*block:3*block]
-    else:
-        third_line = SEQ
-
-    custom_scale = [
-        (0.0, "#ffffff"),
-        (0.05, "#f0f0f0"),
-        (0.15, "#d9d9d9"),
-    ]
-    steps = np.linspace(0.2, 1, len(third_line))
-    for pos, color in zip(steps, third_line):
-        custom_scale.append((float(pos), color))
-
-    fig_hm = px.imshow(
-        pivot,
-        color_continuous_scale=custom_scale,
-        aspect="auto",
-        labels=dict(color="Produtos"),
-        title=f"Categorias × Benefícios — {sel_brand_label}"
-    )
-    fig_hm.update_layout(font=dict(size=24))
-    fig_hm.update_layout(
-        height=CHART_HEIGHT,
-        coloraxis_colorbar=dict(title="Produtos", tickfont=dict(size=AXIS_TICK_SIZE)),
-        xaxis=dict(tickfont=dict(size=AXIS_TICK_SIZE)),
-        yaxis=dict(tickfont=dict(size=AXIS_TICK_SIZE)),
-        hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE)
-    )
-    st.plotly_chart(fig_hm, use_container_width=True)
-
-st.markdown("---")
-
-#  4) Comparação entre Marcas 
-st.markdown(f"<div class='section-title'>Comparação de Benefícios entre Marcas</div>", unsafe_allow_html=True)
-
-comp_labels = st.multiselect(
-    **collapsed_label("Marcas (comparação)"),
-    options=BRAND_LABELS,
-    default=[sel_brand_label],
-    max_selections=3
-)
-
-cmp_ben_mode = st.radio(
-    **collapsed_label("Benefícios (comparação)"),
-    options=["(Todos)", "Selecionar"], horizontal=True, key="cmp_ben_mode"
-)
-
-cmp_opts: List[str] = []
-if cmp_ben_mode == "Selecionar":
-    if comp_labels:
-        tmp = []
-        for lab in comp_labels:
-            val = LABEL_MAP[lab]
-            base = df[df["_source_file"] == val] if uses_files else df[df["marca"] == lab]
-            tmp.append(explode_benefits(base)[["beneficio"]])
-        exist = sorted(pd.concat(tmp)["beneficio"].dropna().unique().tolist()) if tmp else []
-        cmp_opts = [b for b in BENEFICIOS_VALIDOS if b in set(exist)] if BENEFICIOS_VALIDOS else exist
-    else:
-        exist = explode_benefits(df)["beneficio"].dropna().unique().tolist()
-        cmp_opts = [b for b in BENEFICIOS_VALIDOS if b in set(exist)] if BENEFICIOS_VALIDOS else sorted(exist)
-
-cmp_sel_bens: List[str] = []
-if cmp_ben_mode == "Selecionar":
-    cmp_sel_bens = st.multiselect(**collapsed_label("Benefícios (seleção múltipla)"),
-                                  options=cmp_opts, default=cmp_opts[:10])
-
-if comp_labels:
+if sel_brands:
     dfs_comp = []
-    for lab in comp_labels:
+    for lab in sel_brands:
         val = LABEL_MAP[lab]
         base = df[df["_source_file"] == val] if uses_files else df[df["marca"] == lab]
         exp_ = explode_benefits(base)
-        if cmp_ben_mode == "Selecionar" and cmp_sel_bens:
-            exp_ = exp_[exp_["beneficio"].isin(cmp_sel_bens)]
+        ben_focus = TOP3 if 'TOP3' in locals() else []
+        if ben_focus:
+            exp_ = exp_[exp_["beneficio"].isin(ben_focus)]
+        if exp_.empty:
+            local_top = (explode_benefits(base).groupby("beneficio")["produto"]
+                         .nunique().sort_values(ascending=False).head(3).index.tolist())
+            exp_ = explode_benefits(base)
+            exp_ = exp_[exp_["beneficio"].isin(local_top)]
         grp = (exp_.groupby("beneficio")["produto"].nunique().reset_index(name="produtos"))
         grp["marca_label"] = lab
         dfs_comp.append(grp)
     comp_df = pd.concat(dfs_comp, ignore_index=True) if dfs_comp else pd.DataFrame()
+
     if comp_df.empty:
         st.info("Sem dados para comparar.")
     else:
-        if cmp_ben_mode == "(Todos)":
-            N_TOP = 12
-            topN = (comp_df.groupby("beneficio")["produtos"].sum()
-                    .sort_values(ascending=False).head(N_TOP).index.tolist())
-            comp_df = comp_df[comp_df["beneficio"].isin(topN)]
-        fig_cmp = px.bar(
-            comp_df,
-            x="beneficio", y="produtos",
-            color="marca_label", barmode="group",
-            color_discrete_sequence=SEQ,  
-            labels={"beneficio": "Benefício", "produtos": "Produtos", "marca_label": "Marca"}
-        )
+        orient = st.radio("Orientação do gráfico", options=["Barras verticais", "Barras horizontais"], horizontal=True, key="ben_orient")
+        if orient == "Barras verticais":
+            fig_cmp = px.bar(
+                comp_df, x="beneficio", y="produtos",
+                color="marca_label", barmode="group",
+                color_discrete_sequence=SEQ,
+                labels={"beneficio": "Benefício", "produtos": "Produtos", "marca_label": "Marca"}
+            )
+        else:
+            fig_cmp = px.bar(
+                comp_df, x="produtos", y="beneficio",
+                color="marca_label", barmode="group", orientation="h",
+                color_discrete_sequence=SEQ,
+                labels={"beneficio": "Benefício", "produtos": "Produtos", "marca_label": "Marca"}
+            )
+
         fig_cmp.update_layout(
             height=CHART_HEIGHT,
+            bargap=0.12,
             legend=dict(font=dict(size=LEGEND_FONT_SIZE)),
             xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
             hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
             margin=dict(t=40, b=120, l=30, r=20)
         )
-        st.plotly_chart(fig_cmp, use_container_width=True)
+        fig_cmp.update_traces(textfont=dict(size=BAR_TEXT_SIZE))
+        st.plotly_chart(fig_cmp, width="stretch")
 else:
-    st.caption("Selecione 1 a 3 marcas para comparar.")
+    st.caption("Selecione ao menos uma marca.")
 
 st.markdown("---")
 
-#  5) Pesquisa por Benefício — cards estilizados 
-st.markdown(
-    f"<h3 style='font-size:{SECTION_TITLE_SIZE}px; margin:.75rem 0 .5rem 0; color:{accent(0)}'>Pesquisa por Benefício</h3>",
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    f"""
-    <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px; align-items:end; margin:.25rem 0 .5rem 0;">
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Benefício</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Marca</div></div>
-      <div><div style="font-size:20px; font-weight:700; color:{text_color()}; margin-bottom:6px;">Categoria</div></div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-c1, c2, c3 = st.columns([1.3, 1, 1])
-with c1:
-    q_ben = st.text_input(**collapsed_label("Benefício (pesquisa)"),
-                          placeholder="Ex.: hidratação").strip()
-with c2:
-    p_brand_lab = st.selectbox(**collapsed_label("Marca (filtro)"),
-                               options=["(todas)"] + BRAND_LABELS, index=0)
-with c3:
-    p_cat = st.selectbox(**collapsed_label("Categoria (filtro)"),
-                         options=CAT_OPTS, index=0)
-
-if not q_ben:
-    st.caption("Dica: pesquise um benefício e filtre por marca/categoria para ver os produtos correspondentes.")
-    st.stop()
-
-df_p = df.copy()
-if p_brand_lab != "(todas)":
-    val = LABEL_MAP[p_brand_lab]
-    df_p = df_p[df_p["_source_file"] == val] if uses_files else df_p[df_p["marca"] == p_brand_lab]
-if p_cat != "(todas)":
-    df_p = df_p[df_p["categoria"] == p_cat]
-
-exp_p = explode_benefits(df_p)
-hit = exp_p[exp_p["beneficio"].str.contains(q_ben, case=False, na=False)]
-if hit.empty:
-    st.info("Nenhum produto encontrado para esse benefício nos filtros atuais.")
-    st.stop()
-
-prods = (
-    hit.groupby("produto")
-       .agg(marca=("marca","first"),
-            categoria=("categoria","first"))
-       .reset_index()
-       .rename(columns={"produto":"Produto","marca":"Marca","categoria":"Categoria"})
-)
-
-st.markdown(f"""
-<style>
-.product-card {{
-  border: 2px solid #ececf1; border-radius: 14px;
-  padding: 12px 16px; background: #fff;
-  box-shadow: 0 2px 2px rgba(0,0,0,0.04);
-  display: grid; grid-template-columns: 1.2fr .5fr 1fr; gap: 14px;
-  align-items: center;
-}}
-.product-card + .product-card {{ margin-top: 10px; }}
-.p-name {{ font-weight: 800; font-size: 22px; color: {text_color()}; line-height: 1.2; }}
-.p-brand {{ font-size: 14px; color: #7a7a7a; margin-top: 2px; }}
-.p-price {{ font-weight: 900; font-size: 22px; color: {accent(2)}; text-align: right; }}
-.p-qty   {{ font-size: 14px; color:#777; text-align: right; }}
-.p-pills {{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }}
-.pill {{
-  display:inline-block; padding: 4px 8px; border-radius: 999px;
-  border:1px solid #e5e7eb; background:#f7f7fb; color:#313244;
-  font-size: 12px; font-weight: 700;
-}}
-.pill.cat  {{ background: {accent(0)}22; border-color:{accent(0)}55; color:{accent(0)}; }}
-.pill.hit  {{ background: {accent(1)}22; border-color:{accent(1)}55; color:{accent(1)}; }}
-</style>
+# Encontrar produtos por benefícios 
+st.markdown(f"<div class='section-title'>Encontre produtos por benefícios</div>", unsafe_allow_html=True)
+st.markdown("""
+<div class="note-box">
+<b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais benefícios e, opcionalmente, uma categoria.<br>
+Os produtos são organizados em grupos para facilitar a busca:<br>
+<b>APENAS: [benefício]</b> — produto com SOMENTE aquele benefício.<br>
+<b>EXATAMENTE: [b1 + b2 + ...]</b> — exatamente a combinação selecionada, sem extras.<br>
+<b>CONTÉM: [benefício]</b> — contém o benefício, mas também outros.
+</div>
 """, unsafe_allow_html=True)
 
-base = df_p[df_p["nome"].isin(prods["Produto"])].copy()
+brands_all = sorted(df["marca"].dropna().unique().tolist())
+sel_brands_search = st.multiselect("Marcas", options=brands_all, default=brands_all, key="tb_brands_ben")
 
-# renderiza cards
-for nome_prod in prods["Produto"].tolist():
-    sub = base[base["nome"] == nome_prod]
-    if sub.empty:
-        continue
-    row = sub.iloc[0]
-    marca = row.get("marca", "—")
-    categoria = row.get("categoria", "—")
-    preco = brl(row.get("preco"))
-    qty = fmt_qtd(row.get("quantidade_valor"), row.get("quantidade_unidade"))
+present_benefits = sorted({b for b in explode_benefits(df)["beneficio"].dropna().unique() if b})
+benefit_options = [b for b in BENEFIT_CANONICAL_ORDER if b in present_benefits] if BENEFIT_CANONICAL_ORDER else present_benefits
+sel_benefits = st.multiselect("Benefícios", options=benefit_options, default=benefit_options[:2] if len(benefit_options) >= 2 else benefit_options, key="tb_benefits")
 
-    exp_one = explode_benefits(sub)
-    ben_all = exp_one["beneficio"].dropna().unique().tolist()
-    hit_mask = exp_one["beneficio"].str.contains(q_ben, case=False, na=False)
-    ben_hits = exp_one.loc[hit_mask, "beneficio"].dropna().unique().tolist()
+cats_all_search = sorted(df[df["marca"].isin(sel_brands_search)]["categoria"].dropna().unique().tolist())
+if CATEGORY_CANONICAL_ORDER:
+    cats_all_search = [c for c in CATEGORY_CANONICAL_ORDER if c in cats_all_search] + [c for c in cats_all_search if c not in CATEGORY_CANONICAL_ORDER]
+sel_cat_search = st.selectbox("Categoria (opcional)", options=["(todas)"] + cats_all_search, index=0, key="tb_cat_ben")
 
-    # 2 destaques + 3 gerais
-    ben_hits_show = ben_hits[:2]
-    ben_others = [b for b in ben_all if b not in ben_hits_show][:3]
+if not sel_brands_search or not sel_benefits:
+    st.info("Selecione ao menos uma marca e um benefício.")
+else:
+    base_df_search = df[df["marca"].isin(sel_brands_search)].copy()
+    if sel_cat_search != "(todas)":
+        base_df_search = base_df_search[base_df_search["categoria"] == sel_cat_search]
 
-    st.markdown(
-        f"""
-        <div class="product-card">
-          <div>
-            <div class="p-name">{nome_prod}</div>
-            <div class="p-brand">{marca}</div>
-          </div>
+    # Agrupar benefícios por produto
+    by_prod_ben = []
+    for _, row in base_df_search.iterrows():
+        benefits_set = set(split_semicolon(row.get("beneficios", "")))
+        if BENEFIT_CANONICAL_ORDER:
+            benefits_set = {b for b in benefits_set if b in BENEFIT_CANONICAL_ORDER}
+        by_prod_ben.append({
+            "marca": row.get("marca"),
+            "nome": row.get("nome"),
+            "categoria": row.get("categoria"),
+            "beneficios_str": row.get("beneficios", ""),
+            "ingredientes": row.get("ingredientes", ""),
+            "preco": row.get("preco"),
+            "quantidade_valor": row.get("quantidade_valor"),
+            "quantidade_unidade": row.get("quantidade_unidade"),
+            "bases": benefits_set
+        })
+    by_prod_df = pd.DataFrame(by_prod_ben)
 
-          <div>
-            <div class="p-price">{preco}</div>
-            <div class="p-qty">{qty}</div>
-          </div>
+    if by_prod_df.empty:
+        st.info("Sem dados para a seleção atual.")
+    else:
+        def classify_product_benefits(bases: set[str], selected: list[str]) -> list[str]:
+            buckets = []
+            sel_set = set(selected)
+            for beneficio in selected:
+                if bases == {beneficio}:
+                    buckets.append(f"APENAS: {beneficio}")
+            if len(sel_set) > 1 and bases == sel_set:
+                beneficios_str = " + ".join(sorted(selected))
+                buckets.append(f"EXATAMENTE: {beneficios_str}")
+            for beneficio in selected:
+                if beneficio in bases and bases != {beneficio} and bases != sel_set:
+                    buckets.append(f"CONTÉM: {beneficio}")
+            return buckets
 
-          <div class="p-pills">
-            <span class="pill cat">{categoria}</span>
-            {''.join(f'<span class="pill hit">{b}</span>' for b in ben_hits_show)}
-            {''.join(f'<span class="pill">{b}</span>' for b in ben_others)}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        bucket_rows = []
+        for _, row in by_prod_df.iterrows():
+            for bucket in classify_product_benefits(row["bases"], sel_benefits):
+                d = row.to_dict()
+                d["bucket"] = bucket
+                bucket_rows.append(d)
+
+        if not bucket_rows:
+            st.info("Nenhum produto atende à seleção.")
+        else:
+            by_prod_exploded = pd.DataFrame(bucket_rows)
+
+            bucket_order = []
+            if len(sel_benefits) > 1:
+                bucket_order.append("EXATAMENTE: " + " + ".join(sorted(sel_benefits)))
+            for b in sel_benefits:
+                bucket_order.append(f"APENAS: {b}")
+            for b in sel_benefits:
+                bucket_order.append(f"CONTÉM: {b}")
+
+            # Tabelas por marca
+            for marca in sel_brands_search:
+                sub = by_prod_exploded[by_prod_exploded["marca"] == marca]
+                if sub.empty:
+                    continue
+
+                st.markdown(f"<div class='brand-header'>{marca}</div>", unsafe_allow_html=True)
+
+                for bucket in bucket_order:
+                    tb = sub[sub["bucket"] == bucket].copy()
+                    if tb.empty:
+                        continue
+
+                    st.markdown(f"<div class='bucket-title'>{bucket}</div>", unsafe_allow_html=True)
+
+                    tb["Preço"] = tb["preco"].apply(fmt_price)
+                    tb["Quantidade"] = tb.apply(lambda r: fmt_qtd(r["quantidade_valor"], r["quantidade_unidade"]), axis=1)
+
+                    display_tb = tb[["nome","categoria","Quantidade","Preço","beneficios_str","ingredientes"]].rename(columns={
+                        "nome": "Produto",
+                        "categoria": "Categoria",
+                        "beneficios_str": "Benefícios",
+                        "ingredientes": "Ingredientes"
+                    }).fillna("—").drop_duplicates()
+
+                    st.dataframe(display_tb, width="stretch", hide_index=True)
+
+            # Gráfico após as tabelas
+            st.markdown("---")
+            st.markdown("### Visualizações resumidas da sua seleção")
+            st.markdown("""
+<div class="note-box">
+<b>O que você vê aqui?</b><br>
+• <b>Por marca × bucket</b>: quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).
+</div>
+""", unsafe_allow_html=True)
+
+            agg_bucket = (
+                by_prod_exploded
+                .groupby(["marca","bucket"])["nome"]
+                .nunique()
+                .reset_index(name="produtos")
+            )
+            agg_bucket["bucket"] = pd.Categorical(agg_bucket["bucket"], categories=bucket_order, ordered=True)
+            agg_bucket = agg_bucket.sort_values(["bucket","marca"])
+
+            bar_mode = st.radio("Modo", ["Empilhado", "Agrupado"], horizontal=True, key="g_sum_mode_ben")
+            barmode = "stack" if bar_mode == "Empilhado" else "group"
+
+            fig_sum = px.bar(
+                agg_bucket, x="marca", y="produtos", color="bucket", barmode=barmode,
+                color_discrete_sequence=SEQ,
+                labels={"marca":"Marca", "produtos":"Nº de produtos", "bucket":"Grupo"},
+            )
+            fig_sum.update_traces(
+                hovertemplate="<b>%{x}</b><br>Grupo: <b>%{fullData.name}</b><br>Produtos: <b>%{y}</b><extra></extra>"
+            )
+            fig_sum.update_layout(
+                height=720,
+                margin=dict(t=40, b=80, l=20, r=260),
+                legend=dict(font=dict(size=LEGEND_FONT_SIZE), itemwidth=90),
+                xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+                yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+                hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE)
+            )
+            st.plotly_chart(fig_sum, width="stretch")
+
+st.markdown("---")

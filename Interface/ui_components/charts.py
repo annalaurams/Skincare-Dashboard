@@ -1,43 +1,64 @@
 from __future__ import annotations
-import sys
-from pathlib import Path
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from core.theme import color_sequence
+from include import *          
+from pathlib import Path      
 
-sys.path.append("/home/usuario/Área de trabalho/Dados/models")
-try:
-    from category import CATEGORY_CANONICAL_ORDER
-except Exception:
-    CATEGORY_CANONICAL_ORDER = None
+def _pick(seq, i, fallback=0):
+    return seq[i] if i < len(seq) else seq[fallback]
 
-def apply_filters(
-    df: pd.DataFrame,
-    marcas: list[str] | None,
-    cats: list[str] | None,
-    source_files: list[str] | None = None
-) -> pd.DataFrame:
+def _gradient(a: str, b: str) -> str:
+    return f"linear-gradient(135deg, {a} 0%, {b} 100%)"
+
+def _render_summary_cards(total_left: int, label_left: str, total_right: int, label_right: str, seq):
+    g1_from = _pick(seq, 0)
+    g1_to   = _pick(seq, 1, fallback=0)
+    g2_from = _pick(seq, 2, fallback=0)
+    g2_to   = _pick(seq, 3, fallback=1)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(
+            f"""
+            <div style="background: {_gradient(g1_from, g1_to)};
+                 border-radius: 12px; padding: 20px; text-align: center; color: white;">
+                <div style="font-size: 42px; font-weight: bold;">{total_left}</div>
+                <div style="font-size: 28px; opacity: 0.9;">{label_left}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    with col2:
+        st.markdown(
+            f"""
+            <div style="background: {_gradient(g2_from, g2_to)};
+                 border-radius: 12px; padding: 20px; text-align: center; color: white;">
+                <div style="font-size: 42px; font-weight: bold;">{total_right}</div>
+                <div style="font-size: 28px; opacity: 0.9;">{label_right}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+#  Funções de Filtro
+def apply_filters(df: pd.DataFrame, marcas=None, cats=None, source_files=None) -> pd.DataFrame:
     out = df.copy()
+
     if source_files is not None and "_source_file" in out.columns:
-        if source_files:
-            out = out[out["_source_file"].isin(source_files)]
-        else:
-            return out.iloc[0:0]
+        out = out[out["_source_file"].isin(source_files)] if source_files else out.iloc[0:0]
+
     if marcas:
         out = out[out["marca"].isin(marcas)]
     if cats:
         out = out[out["categoria"].isin(cats)]
+
     return out
 
 def _pretty_from_source(fname: str) -> str:
     stem = Path(fname).stem
-    # for suf in ["_products", "_skincare", "_cosmetics", "_dados"]:
     for suf in ["_products"]:
         stem = stem.replace(suf, "")
     return stem.replace("_", " ").title()
 
-
+# GRÁFICO 1: PRODUTOS POR CATEGORIA (múltiplas marcas, 1 categoria)
 def chart_produtos_por_categoria(
     df: pd.DataFrame,
     palette_name: str,
@@ -53,16 +74,18 @@ def chart_produtos_por_categoria(
     order_option: str | None = None,
     show_internal_title: bool = False
 ):
+
     import math
 
     if df.empty:
         st.warning("Nenhum dado para exibir.")
         return
 
-    # tooltip
+    # Identifica a categoria selecionada
     cats = sorted([c for c in df["categoria"].dropna().unique().tolist()])
     cat_title = cats[0] if len(cats) == 1 else "Várias categorias"
 
+    # Agrupa por marca 
     uses_files = "_source_file" in df.columns
     if uses_files:
         base = df[df["_source_file"].isin(selected_files)].copy() if selected_files else df.copy()
@@ -79,26 +102,23 @@ def chart_produtos_por_categoria(
         key_col = "marca"
         label_col = "marca"
 
+    #  ordenação
     if order_option == "Quantidade (crescente)":
         dist = dist.sort_values(["quantidade", label_col], ascending=[True, True]).reset_index(drop=True)
     elif order_option == "Alfabética":
         dist = dist.sort_values(label_col, ascending=True).reset_index(drop=True)
-    elif order_option == "Ordem Canônica" and CATEGORY_CANONICAL_ORDER:
-
-        _CAT_ORDER_MAP = {c: i for i, c in enumerate(CATEGORY_CANONICAL_ORDER)}
-        dist["cat_order"] = dist[label_col].map(_CAT_ORDER_MAP).fillna(9999)
-        dist = dist.sort_values(["cat_order", label_col]).reset_index(drop=True)
-        dist = dist.drop(columns=["cat_order"])
-    else:
+    else: 
         dist = dist.sort_values(["quantidade", label_col], ascending=[False, True]).reset_index(drop=True)
 
     seq = color_sequence(palette_name)
-    tabs = st.tabs(["Barras", "Rosca"])
+    tabs = st.tabs(["Barras (Quantidade de Produtos)", "Rosca (Porcentagem de Produtos)"])
 
-    # BARRAS 
+    # TAB: GRÁFICO DE BARRAS
     with tabs[0]:
-        hovermode_layout = {"hovermode": "closest",
-                            "hoverlabel": dict(font_size=22, font_color="gray", bgcolor="white", align="left")}
+        hovermode_layout = {
+            "hovermode": "closest",
+            "hoverlabel": dict(font_size=22, font_color="gray", bgcolor="white", align="left")
+        }
 
         fig = px.bar(
             dist,
@@ -107,7 +127,8 @@ def chart_produtos_por_categoria(
             labels={label_col: "Marca", "quantidade": "Número de produtos"},
             hover_data={}
         )
-        # cores por barra 
+
+        # Aplica cores diferentes para cada barra
         colors = (seq * ((len(dist) // max(1, len(seq))) + 1))[:len(dist)]
         fig.update_traces(
             marker_color=colors,
@@ -116,42 +137,38 @@ def chart_produtos_por_categoria(
             hovertemplate="<b>%{x}</b><br>Categoria: <b>" + cat_title + "</b><br>Quantidade: %{y}<extra></extra>"
         )
 
-        n_items = dist[label_col].nunique()
-        cols = 1 if itemwidth <= 0 else max(1, math.floor(1000 / itemwidth))
-        rows = math.ceil(n_items / max(1, cols))
-
         layout_kwargs = dict(
             height=750,
             legend_title_text="",
             xaxis_tickangle=-15,
-            xaxis=dict(title_font=dict(size=28, color="#363636"),
-                       tickfont=dict(size=22, color="#363636")),
-            yaxis=dict(title_font=dict(size=28, color="#363636"),
-                       tickfont=dict(size=22, color="#363636")),
-            margin=dict(t=40, b=100 if not show_bottom_legend else margin_b, r=20, l=20),
-            title=dict(text=f"Categoria: {cat_title}", font=dict(size=24, color="#363636"))
+            xaxis=dict(
+                title_font=dict(size=28, color="#363636"),
+                tickfont=dict(size=22, color="#363636")
+            ),
+            yaxis=dict(
+                title_font=dict(size=28, color="#363636"),
+                tickfont=dict(size=22, color="#363636")
+            ),
+            margin=dict(t=40, b=100, r=20, l=20),
+            title=dict(text=f"Categoria: {cat_title}", font=dict(size=24, color="#363636")),
+            showlegend=False
         )
-        # if show_bottom_legend:
-        #     layout_kwargs.update(dict(
-        #         showlegend=True,
-        #         legend=dict(
-        #             orientation="h",
-        #             y=legend_y - (rows-1)*0.02,
-        #             x=0.5, xanchor="center",
-        #             itemwidth=itemwidth if itemwidth > 0 else None,
-        #             traceorder="normal",
-        #             font=dict(size=legend_size, color="#363636")
-        #         ),
-        #     ))
-        # else:
-        layout_kwargs.update(dict(showlegend=False))
 
         fig.update_layout(**layout_kwargs, **hovermode_layout)
         fig.update_yaxes(automargin=True)
         fig.update_xaxes(automargin=True)
         st.plotly_chart(fig, use_container_width=True)
 
-    # ROSCA 
+        seq_cards = color_sequence(palette_name)
+        total_produtos = int(dist["quantidade"].sum())
+        total_categorias = 1 
+        _render_summary_cards(
+            total_left=total_produtos, label_left="Total de Produtos",
+            total_right=total_categorias, label_right="Total de Categoria Selecionadas",
+            seq=seq_cards
+        )
+
+    # TAB: GRÁFICO DE ROSCA
     with tabs[1]:
         figp = px.pie(
             dist,
@@ -176,3 +193,148 @@ def chart_produtos_por_categoria(
             hoverlabel=dict(font_size=22, font_color="gray", bgcolor="white", align="left")
         )
         st.plotly_chart(figp, use_container_width=True)
+
+        seq_cards = color_sequence(palette_name)
+        total_produtos = int(dist["quantidade"].sum())
+        total_categorias = 1
+        _render_summary_cards(
+            total_left=total_produtos, label_left="Total de Produtos",
+            total_right=total_categorias, label_right="Categoria Selecionada",
+            seq=seq_cards
+        )
+
+# GRÁFICO 2: CATEGORIAS POR MARCA (1 marca, TODAS as categorias)
+def chart_categorias_por_marca(
+    df: pd.DataFrame,
+    palette_name: str,
+    key_prefix: str = "marca",
+    legend_size: int = 30,
+    bar_text_size: int = 18,
+    order_option: str | None = None,
+    show_internal_title: bool = False
+):
+    import math
+
+    if df.empty:
+        st.warning("Nenhum dado para exibir.")
+        return
+
+    # Identifica a marca 
+    uses_files = "_source_file" in df.columns
+    if uses_files:
+        marca_files = df["_source_file"].dropna().unique().tolist()
+        marca_name = _pretty_from_source(marca_files[0]) if len(marca_files) == 1 else "Várias marcas"
+    else:
+        marcas = df["marca"].dropna().unique().tolist() if "marca" in df.columns else []
+        marca_name = marcas[0] if len(marcas) == 1 else "Várias marcas"
+
+    # Agrupa por categoria 
+    dist = df.groupby("categoria")["nome"].size().reset_index(name="quantidade")
+
+    # ordenação
+    if order_option == "Quantidade (crescente)":
+        dist = dist.sort_values(["quantidade", "categoria"], ascending=[True, True]).reset_index(drop=True)
+    elif order_option == "Alfabética":
+        dist = dist.sort_values("categoria", ascending=True).reset_index(drop=True)
+    elif order_option == "Ordem Canônica" and CATEGORY_CANONICAL_ORDER:
+
+        _CAT_ORDER_MAP = {c: i for i, c in enumerate(CATEGORY_CANONICAL_ORDER)}
+        dist["cat_order"] = dist["categoria"].map(_CAT_ORDER_MAP).fillna(9999)
+        dist = dist.sort_values(["cat_order", "categoria"]).reset_index(drop=True)
+        dist = dist.drop(columns=["cat_order"])
+    else: 
+        dist = dist.sort_values(["quantidade", "categoria"], ascending=[False, True]).reset_index(drop=True)
+
+    seq = color_sequence(palette_name)
+    tabs = st.tabs(["Barras", "Rosca"])
+
+    # TAB: GRÁFICO DE BARRAS
+    with tabs[0]:
+        hovermode_layout = {
+            "hovermode": "closest",
+            "hoverlabel": dict(font_size=22, font_color="gray", bgcolor="white", align="left")
+        }
+
+        fig = px.bar(
+            dist,
+            x="categoria", y="quantidade",
+            text="quantidade",
+            labels={"categoria": "Categoria", "quantidade": "Número de produtos"},
+            hover_data={}
+        )
+
+        # Aplica cores diferentes para cada barra
+        colors = (seq * ((len(dist) // max(1, len(seq))) + 1))[:len(dist)]
+        fig.update_traces(
+            marker_color=colors,
+            textposition="outside",
+            textfont=dict(size=bar_text_size, color="#363636"),
+            hovertemplate="<b>%{x}</b><br>Marca: <b>" + marca_name + "</b><br>Quantidade: %{y}<extra></extra>"
+        )
+
+        layout_kwargs = dict(
+            height=750,
+            legend_title_text="",
+            xaxis_tickangle=-15,
+            xaxis=dict(
+                title_font=dict(size=28, color="#363636"),
+                tickfont=dict(size=22, color="#363636")
+            ),
+            yaxis=dict(
+                title_font=dict(size=28, color="#363636"),
+                tickfont=dict(size=22, color="#363636")
+            ),
+            margin=dict(t=40, b=100, r=20, l=20),
+            title=dict(text=f"Marca: {marca_name}", font=dict(size=24, color="#363636")),
+            showlegend=False
+        )
+
+        fig.update_layout(**layout_kwargs, **hovermode_layout)
+        fig.update_yaxes(automargin=True)
+        fig.update_xaxes(automargin=True)
+        st.plotly_chart(fig, use_container_width=True)
+
+        seq_cards = color_sequence(palette_name)
+        total_produtos = int(dist["quantidade"].sum())
+        total_categorias = int(dist["categoria"].nunique())
+        _render_summary_cards(
+            total_left=total_produtos, label_left="Total de Produtos",
+            total_right=total_categorias, label_right="Total de Categorias",
+            seq=seq_cards
+        )
+
+    # TAB: GRÁFICO DE ROSCA
+    with tabs[1]:
+        figp = px.pie(
+            dist,
+            names="categoria", values="quantidade",
+            hole=0.55, color="categoria", color_discrete_sequence=seq
+        )
+        figp.update_traces(
+            textposition="inside", textinfo="percent+label",
+            textfont=dict(size=28, color="#363636"),
+            hovertemplate="<b>%{label}</b><br>Marca: <b>" + marca_name + "</b><br>Quantidade: %{value} (%{percent:.1%})<extra></extra>"
+        )
+        figp.update_layout(
+            height=750,
+            margin=dict(t=40, b=40, l=40, r=140),
+            legend_title_text="",
+            legend=dict(
+                x=0.86, xanchor="left",
+                y=0.98, yanchor="top",
+                font=dict(size=30, color="#363636")
+            ),
+            title=dict(text=f"Marca: {marca_name}", font=dict(size=24, color="#363636")),
+            hoverlabel=dict(font_size=22, font_color="gray", bgcolor="white", align="left")
+        )
+        st.plotly_chart(figp, use_container_width=True)
+
+        # Cards (agora usando paleta)
+        seq_cards = color_sequence(palette_name)
+        total_produtos = int(dist["quantidade"].sum())
+        total_categorias = int(dist["categoria"].nunique())
+        _render_summary_cards(
+            total_left=total_produtos, label_left="Total de Produtos",
+            total_right=total_categorias, label_right="Total de Categorias",
+            seq=seq_cards
+        )

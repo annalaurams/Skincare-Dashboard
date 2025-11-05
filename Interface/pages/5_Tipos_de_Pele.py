@@ -1,126 +1,190 @@
+# pages/5_Tipos_de_Pele.py
 from __future__ import annotations
-import sys
-import pandas as pd
-import numpy as np
-import streamlit as st
-import plotly.express as px
 
-from core.data import load_data
-from core.theme import apply_base_theme, apply_palette_css, color_sequence
+# ---- Base centralizada: st, pd, px, np, load_data, color_sequence, modelos, Path, etc. ----
+from include import *
 
-sys.path.append("/home/usuario/Área de trabalho/Dados/models")
-try:
-    from skin import SKIN_TYPE_SYNONYMS_PT, SKIN_TYPE_CANONICAL_ORDER
-except Exception:
-    SKIN_TYPE_SYNONYMS_PT = {}
-    SKIN_TYPE_CANONICAL_ORDER = [
-        "acneica","com cicatrizes","com celulite","com espinhas ativas","com flacidez",
-        "com manchas","com olheiras","com poros dilatados","com rosacea","desidratada",
-        "madura","mista","normal","oleosa","opaca","seca","sensível","radiante","reativa",
-        "todos os tipos","(não informado)"
-    ]
-try:
-    from category import CATEGORY_CANONICAL_ORDER
-except Exception:
-    CATEGORY_CANONICAL_ORDER = None
-
-st.set_page_config(page_title="Skincare • Tipos de Pele", page_icon="🧬", layout="wide")
-
+# ===== Paleta local e constantes visuais =====
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
-apply_base_theme()
+
 apply_palette_css(st.session_state["palette_name"])
-SEQ = color_sequence(st.session_state["palette_name"])
+SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f3"]
 
 def accent(i=0): return SEQ[i % len(SEQ)] if SEQ else "#6e56cf"
+def accent2(): return SEQ[1] if len(SEQ) > 1 else "#22c55e"
 def text_color(): return "#262730"
 def subtext_color(): return "#555"
 def panel_bg(): return "#ffffff"
 def neutral_border(): return "#ececf1"
 
-TITLE_TEXT     = "Tipos de Pele"
-TAGLINE_TEXT   = "Analise como os produtos são direcionados para diferentes tipos de pele"
-TITLE_SIZE     = 60
-TAGLINE_SIZE   = 26
+# ===== Estilo e cabeçalho da página =====
+TITLE_TEXT   = "Tipos de Pele"
+TAGLINE_TEXT = (
+    "Tipos de pele atendidas pelos produtos, podendo ser: acneica, com cicatrizes, "
+    "com manchas, com olheiras, com poros dilatados, madura, mista, normal, oleosa, "
+    "seca, sensível ou todos os tipos."
+)
+TITLE_SIZE   = 56
+TAGLINE_SIZE = 24
+CHART_H = 640
+AXIS_TITLE_SIZE = 22
+AXIS_TICK_SIZE  = 20
+LEGEND_FONT_SIZE = 22
+LEGEND_TITLE_SIZE = 30
+TOOLTIP_FONT_SIZE = 22
+BARGAP = 0.18
+BARGROUPGAP = 0.08
 
-FILTER_TITLE_SIZE   = 32
-FILTER_LABEL_SIZE   = 18
-FILTER_INPUT_SIZE   = 18
-WIDGET_HEIGHT_PX    = 48
-
-KPI_CARD_H     = 150
-KPI_TITLE_PX   = 18
-KPI_VALUE_PX   = 30
-KPI_HELP_PX    = 14
-KPI_RADIUS     = 16
-KPI_SHADOW     = "0 10px 28px rgba(0,0,0,.08)"
-
-CHART_H            = 680
-AXIS_TITLE_SIZE    = 24
-AXIS_TICK_SIZE     = 22
-LEGEND_FONT_SIZE   = 30
-TOOLTIP_FONT_SIZE  = 26
-BAR_TEXT_SIZE      = 18
-BARGAP             = 0.18
-BARGROUPGAP        = 0.08
-
-PILL_FONT          = 12
 
 st.markdown(f"""
 <style>
-/* Títulos e textos */
-.section-title {{ font-size:{FILTER_TITLE_SIZE}px; font-weight:700; color:{text_color()}; margin: 1rem 0 .5rem 0; }}
-.subtle       {{ font-size:{TAGLINE_SIZE}px; color:{subtext_color()}; }}
-
-/* Altura e fonte dos inputs */
-.stSelectbox div[role="combobox"],
-.stMultiSelect div[role="combobox"],
-.stTextInput input, .stTextInput textarea {{
-    min-height: {WIDGET_HEIGHT_PX}px !important;
-    height: {WIDGET_HEIGHT_PX}px !important;
-    font-size: {FILTER_INPUT_SIZE}px !important;
+.page-sub {{ 
+    font-size:{TAGLINE_SIZE}px; 
+    color:{subtext_color()}; 
+    margin:.4rem 0 1.2rem 0; 
 }}
-.stRadio label, .stSelectbox label, .stTextInput label, .stMultiSelect label {{
-    font-size:{FILTER_LABEL_SIZE}px !important; color:{text_color()} !important; font-weight:700 !important;
-}}
-div[data-baseweb="select"] {{ width: 100% !important; }}
 
-/* KPI cards */
-.kpi-box {{
-  border:1px solid {neutral_border()}; border-radius:{KPI_RADIUS}px; background:{panel_bg()};
-  box-shadow:{KPI_SHADOW}; padding:16px 18px; height:{KPI_CARD_H}px;
-  display:flex; flex-direction:column; justify-content:center; gap:.25rem;
+/* NOTA */
+.mode-description {{
+    font-size: 18px;
+    color: #555;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 20px;
 }}
-.kpi-title {{ font-size:{KPI_TITLE_PX}px; color:{subtext_color()}; font-weight:700; }}
-.kpi-value {{ font-size:{KPI_VALUE_PX}px; font-weight:900; color:{text_color()}; line-height:1; }}
-.kpi-help  {{ font-size:{KPI_HELP_PX}px; color:{subtext_color()}; }}
 
-/* Lista (Pesquisa) */
-.list-wrap {{ border:1px solid {neutral_border()}; border-radius:12px; background:{panel_bg()}; padding:10px; }}
-.row {{
-  border:1px solid {neutral_border()}; border-radius:12px; background:{panel_bg()};
-  padding:14px 16px; box-shadow:0 8px 22px rgba(0,0,0,.06);
-  display:grid; grid-template-columns: 1.6fr .7fr 1.2fr; align-items:center; gap:12px; margin:8px 8px;
+/* TÍTULO DE SEÇÃO — PRETO */
+.section-config {{
+    font-size: 22px;
+    font-weight: 800;
+    color: #000000;
+    margin: 16px 0 8px 0;
 }}
-.row + .row {{ margin-top:8px; }}
-.r-left .name {{ font-weight:800; color:{text_color()}; font-size:22px; line-height:1.2; }}
-.r-left .brand {{ color:{subtext_color()}; font-size:14px; margin-top:2px; }}
-.pill {{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:{PILL_FONT}px; color:{text_color()};
-        background:{accent(0)}14; border:1px solid {accent(0)}55; }}
-.r-price {{ font-weight:900; color:{accent(0)}; font-size:18px; text-align:right; }}
-.r-qty   {{ color:{subtext_color()}; font-size:14px; text-align:right; }}
-.r-mid   {{ color:{text_color()}; font-size:14px; }}
 
-@media (max-width: 980px){{
-  .row {{ grid-template-columns: 1fr; text-align:left; }}
-  .r-price, .r-qty {{ text-align:left; }}
+/* RADIO PILLS PARA MÉTRICA — SEM MOLDURAS COLORIDAS */
+.stRadio > div[role="radiogroup"] {{
+    display: flex;
+    gap: 12px;
+    padding: 0;
+    border: none;
+    background: transparent;
+}}
+.stRadio > div[role="radiogroup"] > label {{
+    background: #fff;
+    border: 1px solid {neutral_border()};
+    border-radius: 9999px;
+    padding: 8px 16px;
+    margin: 0 !important;
+    font-weight: 700;
+    font-size: 18px !important;
+    color: {text_color()} !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}}
+.stRadio > div[role="radiogroup"] > label:hover {{
+    border-color: {neutral_border()};
+    background: #fafafa;
+}}
+.stRadio > div[role="radiogroup"] > label > div:first-child {{
+    display: none !important;   /* esconde a bolinha */
+}}
+.stRadio > div[role="radiogroup"] > label[aria-checked="true"] {{
+    background: {accent(0)} !important;
+    color: #fff !important;
+    border-color: {accent(0)} !important;
+}}
+
+/* CABEÇALHO DA MARCA (tabelas) */
+.brand-header {{
+    background: linear-gradient(135deg, {accent(0)} 0%, {accent2()} 100%);
+    color: white;
+    padding: 18px 24px;
+    border-radius: 14px;
+    font-size: 28px;
+    font-weight: 900;
+    margin: 32px 0 16px 0;
+    box-shadow: 0 4px 12px {accent(0)}40;
+}}
+
+/* SUBTÍTULO DO BUCKET */
+.bucket-title {{
+    background: {accent(0)}15;
+    color: {accent(0)};
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 20px;
+    font-weight: 800;
+    margin: 16px 0 12px 0;
+    border-left: 5px solid {accent(0)};
+}}
+
+/* DATAFRAME: FONTES MAIORES + QUEBRA DE LINHA + ROLAGEM ÚNICA */
+div[data-testid="stDataFrame"] {{
+    border: 3px solid {accent(0)} !important;
+    border-radius: 14px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}}
+
+div[data-testid="stDataFrame"] table {{
+    font-size: 28px !important;
+    line-height: 1.6 !important;
+}}
+
+div[data-testid="stDataFrame"] thead th {{
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    padding: 14px 18px !important;
+    background-color: {accent(0)}15 !important;
+    color: {text_color()} !important;
+    white-space: nowrap !important;
+}}
+
+div[data-testid="stDataFrame"] tbody td {{
+    padding: 16px 18px !important;
+    font-size: 26px !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    vertical-align: top !important;
+    min-height: 60px !important;
+    height: auto !important;
+}}
+
+div[data-testid="stDataFrame"] tbody tr {{
+    height: auto !important;
+}}
+
+div[data-testid="stDataFrame"] td > div {{
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-height: none !important;
+    height: auto !important;
+    padding: 8px 0 !important;
+}}
+
+/* Remove barra de rolagem interna duplicada */
+div[data-testid="stDataFrame"] > div {{
+    overflow: visible !important;
+}}
+
+/* BOTÕES DE PAGINAÇÃO */
+.stButton > button {{
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    padding: 10px 20px !important;
 }}
 </style>
 """, unsafe_allow_html=True)
 
+#  HELPERS 
 def split_semicolon(s: str) -> list[str]:
-    if not isinstance(s, str) or not s.strip():
-        return []
+    if not isinstance(s, str) or not s.strip(): return []
     return [p.strip() for p in s.split(";") if p.strip()]
 
 def to_base_types(raw: str) -> list[str]:
@@ -129,10 +193,8 @@ def to_base_types(raw: str) -> list[str]:
     for canonical, syns in SKIN_TYPE_SYNONYMS_PT.items():
         for term in syns:
             if term and term.lower() in s:
-                found.add(canonical.lower())
-                break
-    if "todos" in s and "tipo" in s:
-        found.add("todos os tipos")
+                found.add(canonical.lower()); break
+    if "todos" in s and "tipo" in s: found.add("todos os tipos")
     return list(found) or ["(não informado)"]
 
 def explode_skin(df: pd.DataFrame) -> pd.DataFrame:
@@ -141,34 +203,14 @@ def explode_skin(df: pd.DataFrame) -> pd.DataFrame:
         tipos_raw = split_semicolon(r.get("tipo_pele", "")) or ["(não informado)"]
         for t in tipos_raw:
             rows.append({
-                "tipo_pele": t,
-                "nome": r.get("nome"),
-                "marca": r.get("marca"),
-                "categoria": r.get("categoria"),
-                "preco": r.get("preco"),
-                "quantidade": r.get("quantidade"),
+                "tipo_pele": t, "nome": r.get("nome"),
+                "marca": r.get("marca"), "categoria": r.get("categoria"),
+                "beneficios": r.get("beneficios"), "ingredientes": r.get("ingredientes"),
+                "preco": r.get("preco"), 
                 "quantidade_valor": r.get("quantidade_valor"),
-                "quantidade_unidade": r.get("quantidade_unidade"),
+                "quantidade_unidade": r.get("quantidade_unidade")
             })
     return pd.DataFrame(rows)
-
-def qty_text(row: pd.Series) -> str:
-    q = row.get("quantidade")
-    qv = row.get("quantidade_valor")
-    qu = row.get("quantidade_unidade")
-    if isinstance(q, str) and q.strip():
-        return q
-    if pd.notna(qv) and isinstance(qu, str) and qu.strip():
-        try: return f"{float(qv):g}{qu}"
-        except Exception: return f"{qv}{qu}"
-    return ""
-
-def brl(x) -> str:
-    try:
-        if pd.isna(x): return "—"
-        return f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    except Exception:
-        return "—"
 
 def style_axes(fig, height: int = CHART_H):
     fig.update_layout(
@@ -178,356 +220,290 @@ def style_axes(fig, height: int = CHART_H):
         yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE, color=text_color()),
                    tickfont=dict(size=AXIS_TICK_SIZE, color=text_color())),
         height=height,
-        paper_bgcolor=panel_bg(),
-        plot_bgcolor=panel_bg(),
-        title_font_color=text_color(),
-        margin=dict(t=70, b=70, l=20, r=20),
+        paper_bgcolor=panel_bg(), plot_bgcolor=panel_bg(),
+        title=None,
+        margin=dict(t=60, b=70, l=20, r=260),  # espaço p/ legenda à direita
         hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE, font_color="black", bgcolor="white"),
+        legend=dict(font=dict(size=LEGEND_FONT_SIZE), x=1.02, y=1, xanchor="left", yanchor="top"),
+        legend_title_text="Grupo",
+        annotations=[]
     )
     return fig
 
+def product_base_set_series(series: pd.Series) -> set[str]:
+    bases: set[str] = set()
+    for t in series:
+        for b in to_base_types(t):
+            bases.add(b)
+    return bases
+
+def fmt_price(v):
+    try:
+        x = float(v); 
+        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return "—"
+
+def fmt_qtd(v, u):
+    if pd.isna(v): return "—"
+    try:
+        v_float = float(v)
+        v_str = f"{int(v_float)}" if v_float.is_integer() else f"{v_float:.2f}"
+    except:
+        v_str = str(v)
+    return f"{v_str} {u}" if pd.notna(u) and str(u).strip() else v_str
+
+#  DADOS 
 df = load_data()
 
-st.markdown(
-    f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>",
-    unsafe_allow_html=True
+#  HEADER 
+st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
+st.markdown(f"<div class='page-sub'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
+
+# GRÁFICO 1 — Todas as marcas × tipos de pele
+st.markdown("### Todos os tipos de pele por marca")
+st.markdown("""
+<div class='mode-description'>
+    <b>Neste modo:</b> Este gráfico mostra a distribuição de todos os produtos por tipo de pele para todas as marcas. 
+    Use a opção Métrica para alternar entre contagem absoluta dos produtos ou participação percentual (%).
+    Use os botões Anterior/Próximo para navegar se o gráfico ficar muito extenso.
+</div>
+""", unsafe_allow_html=True)
+
+# Controles
+st.markdown(f"<div class='section-config'>Escolha as configurações do gráfico</div>", unsafe_allow_html=True)
+g1_metric = st.radio(
+    "Métrica",
+    ["Nº de produtos", "Percentual (%) por tipo"],
+    horizontal=True,
+    key="g1_metric",
+    label_visibility="collapsed"
 )
-st.markdown(
-    f"<div class='subtle' style='margin:.35rem 0 1.0rem 0;'>{TAGLINE_TEXT}</div>",
-    unsafe_allow_html=True
-)
 
-st.markdown(f"<div class='section-title'>Filtros</div>", unsafe_allow_html=True)
-
-brands = sorted(df["marca"].dropna().unique().tolist())
-cats_all = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else sorted(df["categoria"].dropna().unique().tolist())
-
-c1, c2, c3 = st.columns([1,1,1])
-with c1:
-    sel_brand = st.selectbox("Marca (obrigatório)", options=brands, index=0, key="flt_brand")
-with c2:
-    cat_opts_present = sorted(df[df["marca"] == sel_brand]["categoria"].dropna().unique().tolist())
-    if CATEGORY_CANONICAL_ORDER:
-        ordered = [c for c in CATEGORY_CANONICAL_ORDER if c in cat_opts_present]
-        cat_opts = ["(todas)"] + ordered + [c for c in cat_opts_present if c not in ordered]
-    else:
-        cat_opts = ["(todas)"] + cat_opts_present
-    sel_cat = st.selectbox("Categoria (opcional)", options=cat_opts, index=0, key="flt_cat")
-with c3:
-    q_skin = st.text_input("Buscar tipo de pele (opcional)",
-                           placeholder="ex.: oleosa, sensível, todos os tipos",
-                           key="flt_search")
-
-df_scope = df[df["marca"] == sel_brand].copy()
-if sel_cat != "(todas)":
-    df_scope = df_scope[df_scope["categoria"] == sel_cat]
-
-k1, k2, k3 = st.columns(3)
-skin_expl = explode_skin(df_scope)
-total_products_brand = df[df["marca"] == sel_brand]["nome"].nunique()
-
-distinct_types = set()
-for s in skin_expl["tipo_pele"].dropna().tolist():
-    for b in to_base_types(s):
-        distinct_types.add(b)
-
-top_type = "—"; pct_top = "—"
-if not skin_expl.empty:
-    rows = []
-    for prod, g in skin_expl.groupby("nome"):
-        bases = set()
-        for t in g["tipo_pele"]:
-            bases.update(to_base_types(t))
-        for b in bases:
-            rows.append({"produto": prod, "tipo_base": b})
-    pres = pd.DataFrame(rows)
-    if not pres.empty:
-        dist = pres.groupby("tipo_base")["produto"].nunique().sort_values(ascending=False)
-        top_type = dist.index[0]
-        pct_top = f"{(dist.iloc[0] / max(1, pres['produto'].nunique()) * 100):.1f}%"
-
-df_brand_only = df[df["marca"] == sel_brand].copy()
-brand_skin = explode_skin(df_brand_only)
-rows_tt = []
-for prod, g in brand_skin.groupby("nome"):
+ex_all = explode_skin(df)
+rows_all = []
+for (marca, prod), g in ex_all.groupby(["marca", "nome"]):
     bases = set()
     for t in g["tipo_pele"]:
         bases.update(to_base_types(t))
-    rows_tt.append({"produto": prod, "todos": ("todos os tipos" in bases)})
-pct_todos = f"{(pd.DataFrame(rows_tt)['todos'].mean() * 100):.1f}%" if rows_tt else "—"
+    for b in bases:
+        rows_all.append({"marca": marca, "produto": prod, "tipo_base": b})
+presence_all = pd.DataFrame(rows_all)
 
-# ====== KPIs ======
-k1, k2, k3 = st.columns(3)
-skin_expl = explode_skin(df_scope)
-total_products_brand = df[df["marca"] == sel_brand]["nome"].nunique()
+if presence_all.empty:
+    st.info("Sem dados para exibir.")
+else:
+    dist_all = (presence_all.groupby(["tipo_base","marca"])["produto"]
+                .nunique().reset_index(name="produtos"))
+    dist_all = dist_all[dist_all["produtos"] > 0]
 
-# ... (cálculos de distinct_types, top_type/pct_top e pct_todos permanecem iguais)
+    all_types = dist_all["tipo_base"].unique().tolist()
+    order_types = [t for t in SKIN_TYPE_CANONICAL_ORDER if t in all_types] or sorted(all_types)
 
-KPI_BORDER_PX = 3  # espessura da borda colorida
+    # paginação só com botões
+    PAGE_SIZE = min(10, len(order_types)) if len(order_types) else 10
+    if "g1_page" not in st.session_state: st.session_state["g1_page"] = 0
+    start = st.session_state["g1_page"] * PAGE_SIZE
+    end = start + PAGE_SIZE
+    slice_types = order_types[start:end]
 
-def summary_card(title: str, value: str, helper: str, color_idx: int = 0):
-    st.markdown(
-        f"""
-        <div class="kpi-box" style="border:{KPI_BORDER_PX}px solid {accent(color_idx)};">
-          <div class="kpi-title">{title}</div>
-          <div class="kpi-value">{value}</div>
-          <div class="kpi-help">{helper}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
+    colp1, colp_mid, colp2 = st.columns([1,6,1])
+    with colp1:
+        disable_prev = st.session_state["g1_page"] == 0
+        if st.button("Anterior", key="g1_prev", type="secondary", disabled=disable_prev):
+            st.session_state["g1_page"] = max(0, st.session_state["g1_page"] - 1)
+    with colp2:
+        disable_next = end >= len(order_types)
+        if st.button("Próximo", key="g1_next", type="secondary", disabled=disable_next):
+            st.session_state["g1_page"] = st.session_state["g1_page"] + 1
+
+    dist_all = dist_all[dist_all["tipo_base"].isin(slice_types)]
+    order_types = slice_types
+
+    if g1_metric == "Percentual (%) por tipo":
+        totals_tipo = dist_all.groupby("tipo_base", as_index=False)["produtos"].sum().rename(columns={"produtos":"total_tipo"})
+        dist_all = dist_all.merge(totals_tipo, on="tipo_base", how="left")
+        dist_all["valor"] = (dist_all["produtos"] / dist_all["total_tipo"] * 100).round(1)
+        y_col, y_label = "valor", "% de produtos no tipo"
+        hover = "<b>%{x}</b><br>Marca: <b>%{fullData.name}</b><br>Participação: <b>%{y:.1f}%</b><extra></extra>"
+    else:
+        dist_all["valor"] = dist_all["produtos"]
+        y_col, y_label = "valor", "Nº de produtos"
+        hover = "<b>%{x}</b><br>Marca: <b>%{fullData.name}</b><br>Produtos: <b>%{y:.0f}</b><extra></extra>"
+
+    fig_all = px.bar(
+        dist_all, x="tipo_base", y=y_col, color="marca", barmode="group",
+        color_discrete_sequence=SEQ, category_orders={"tipo_base": order_types},
+        labels={"tipo_base":"Tipo de pele", y_col: y_label}
     )
-
-with k1:
-    summary_card(
-        "Tipos de pele cobertos (marca)",
-        str(len(distinct_types)),
-        f"Produtos analisados: {total_products_brand}",
-        color_idx=0
-    )
-with k2:
-    summary_card(
-        "Tipo mais frequente (escopo)",
-        top_type,
-        f"Participação: {pct_top}",
-        color_idx=1
-    )
-with k3:
-    summary_card(
-        "% “Todos os tipos” (marca)",
-        pct_todos,
-        "Considera todos os produtos da marca",
-        color_idx=2
-    )
-
+    fig_all.update_traces(hovertemplate=hover)
+    fig_all = style_axes(fig_all, height=CHART_H)
+    st.plotly_chart(fig_all, width="stretch")
 
 st.markdown("---")
 
-# ========= GRÁFICO 1 — Distribuição de Tipos de Pele por Marca =========
-st.markdown("### Distribuição de Tipos de Pele por Marca")
+# TABELAS — Encontrar produtos por tipos de pele (com opção de categoria)
+st.markdown("### Encontre produtos por tipo de pele")
+st.markdown("""
+<div class='mode-description'>
+    <b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais tipos de pele e, opcionalmente, uma categoria.<br>
+    Os produtos são organizados em grupos para facilitar a busca:<br>
+    <b>CATEGORIA: Todos os tipos</b> - Produtos marcados pelo fabricante como adequados para "todos os tipos de pele".<br>
+    <b>APENAS: [tipo]</b> - Produtos que atendem SOMENTE aquele tipo específico (ex: apenas para pele seca).<br>
+    <b>EXATAMENTE: [tipo] + [tipo]</b> - Produtos que atendem exatamente a combinação selecionada, sem tipos extras.<br>
+    <b>CONTÉM: [tipo]</b> - Produtos que contêm aquele tipo mas também atendem outros tipos de pele.
+</div>
+""", unsafe_allow_html=True)
 
-if skin_expl.empty:
-    st.info("Sem dados após os filtros.")
+# Filtros
+brands_all = sorted(df["marca"].dropna().unique().tolist())
+sel_brands = st.multiselect("Marcas", options=brands_all, default=brands_all, key="tb_brands")
+
+present_types = sorted({t for t in explode_skin(df)["tipo_pele"].unique() if t})
+present_base = sorted({b for t in present_types for b in to_base_types(t)})
+type_options = [t for t in SKIN_TYPE_CANONICAL_ORDER if t in present_base]
+type_options_with_all = ["Todos os tipos"] + type_options
+sel_types_raw = st.multiselect("Tipos de pele", options=type_options_with_all, default=["seca","acneica"], key="tb_types")
+sel_types = type_options if "Todos os tipos" in sel_types_raw else sel_types_raw
+
+cats_all = sorted(df[df["marca"].isin(sel_brands)]["categoria"].dropna().unique().tolist())
+if CATEGORY_CANONICAL_ORDER:
+    cats_all = [c for c in CATEGORY_CANONICAL_ORDER if c in cats_all] + [c for c in cats_all if c not in CATEGORY_CANONICAL_ORDER]
+sel_cat = st.selectbox("Categoria (opcional)", options=["(todas)"] + cats_all, index=0, key="tb_cat")
+
+if not sel_brands or not sel_types:
+    st.info("Selecione ao menos uma marca e um tipo de pele.")
 else:
-    rows = []
-    for prod, g in skin_expl.groupby("nome"):
-        bases = set()
-        for t in g["tipo_pele"]:
-            bases.update(to_base_types(t))
-        for b in bases:
-            rows.append({"produto": prod, "tipo_base": b})
-    base_presence = pd.DataFrame(rows)
+    base_df = df[df["marca"].isin(sel_brands)].copy()
+    if sel_cat != "(todas)":
+        base_df = base_df[base_df["categoria"] == sel_cat]
 
-    available_bases = sorted(base_presence["tipo_base"].dropna().unique().tolist())
-    opt_cols = st.columns([1,1,2,2])
-    with opt_cols[0]:
-        viz = st.radio("Visualização", ["Barras horizontais", "Rosca"],
-                       horizontal=False, key="viz_dist", label_visibility="collapsed")
-    with opt_cols[1]:
-        show_mode = st.radio("Mostrar", ["Todos", "Selecionar"],
-                             horizontal=False, key="viz_show", label_visibility="collapsed")
-    with opt_cols[2]:
-        if show_mode == "Selecionar":
-            safe_defaults = [b for b in ["oleosa", "sensível", "todos os tipos"] if b in available_bases][:3]
-            sel_bases = st.multiselect("Tipos (quando 'Selecionar')",
-                                       options=available_bases,
-                                       default=safe_defaults,
-                                       key="viz_bases",
-                                       label_visibility="collapsed")
-        else:
-            sel_bases = []
-    with opt_cols[3]:
-        order_opt = st.radio("Ordenação", ["Quantidade (↓)", "Quantidade (↑)", "Alfabética"],
-                             horizontal=True, key="viz_order", label_visibility="collapsed")
-
-    dist = (base_presence.groupby("tipo_base")["produto"].nunique()
-            .reset_index(name="produtos"))
-    total_prod_scope = base_presence["produto"].nunique()
-    dist["pct"] = (dist["produtos"]/max(1,total_prod_scope)*100).round(1)
-
-    if q_skin.strip():
-        ql = q_skin.lower()
-        dist = dist[dist["tipo_base"].str.contains(ql, na=False)]
-    if show_mode == "Selecionar" and sel_bases:
-        dist = dist[dist["tipo_base"].isin(sel_bases)]
-
-    if order_opt == "Quantidade (↓)":
-        dist = dist.sort_values(["produtos","tipo_base"], ascending=[False, True])
-    elif order_opt == "Quantidade (↑)":
-        dist = dist.sort_values(["produtos","tipo_base"], ascending=[True, True])
+    exp = explode_skin(base_df)
+    if exp.empty:
+        st.info("Sem dados para a seleção atual.")
     else:
-        if SKIN_TYPE_CANONICAL_ORDER:
-            order = [t for t in SKIN_TYPE_CANONICAL_ORDER if t in dist["tipo_base"].unique()]
-            dist["tipo_base"] = pd.Categorical(dist["tipo_base"], categories=order, ordered=True)
-            dist = dist.sort_values(["tipo_base"])
-            dist["tipo_base"] = dist["tipo_base"].astype(str)
-        else:
-            dist = dist.sort_values("tipo_base")
-
-    title_suffix = "" if sel_cat == "(todas)" else f" • {sel_cat}"
-
-    if dist.empty:
-        st.info("Sem dados para exibir a distribuição.")
-    else:
-        if viz == "Rosca":
-            fig = px.pie(
-                dist, names="tipo_base", values="produtos",
-                hole=0.55, color="tipo_base", color_discrete_sequence=SEQ
-            )
-            fig.update_traces(
-                textinfo="label+percent",
-                hovertemplate="<b>%{label}</b><br>Produtos: %{value} de " + str(total_prod_scope) + "<br>Participação: %{percent:.1%}<extra></extra>"
-            )
-            fig.update_layout(
-                height=CHART_H,
-                legend=dict(font=dict(size=LEGEND_FONT_SIZE, color=text_color())),
-                paper_bgcolor=panel_bg(), plot_bgcolor=panel_bg(),
-                margin=dict(t=60, b=40, l=10, r=10),
-                hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE)
-            )
-        else:
-            base_plot = dist.sort_values("produtos")
-            fig = px.bar(
-                base_plot, x="produtos", y="tipo_base", orientation="h",
-                text="produtos", color="tipo_base", color_discrete_sequence=SEQ,
-                labels={"produtos":"Nº de produtos", "tipo_base":""},
-                title=f"{sel_brand}{title_suffix}"
-            )
-            fig.update_traces(
-                textposition="outside", textfont=dict(size=BAR_TEXT_SIZE, color="#363636"),
-                marker_line_width=.4, marker_line_color="rgba(0,0,0,.12)",
-                hovertemplate="<b>%{y}</b><br>Produtos: %{x} de " + str(total_prod_scope) + "<br>Participação: %{customdata[0]}%<extra></extra>",
-                customdata=np.expand_dims(base_plot["pct"],1)
-            )
-            fig.update_layout(
-                height=CHART_H, bargap=BARGAP, bargroupgap=BARGROUPGAP,
-                showlegend=False, paper_bgcolor=panel_bg(), plot_bgcolor=panel_bg(),
-                margin=dict(t=60, b=60, l=10, r=10), hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE)
-            )
-        st.plotly_chart(fig, use_container_width=True)
-
-st.markdown("---")
-
-# ========= GRÁFICO 2 — Comparação entre Marcas =========
-st.markdown("### Comparação de Tipos de Pele entre Marcas")
-
-col_cmp1, _ = st.columns([2,3])
-with col_cmp1:
-    marcas_opts = sorted(df["marca"].dropna().unique().tolist())
-    sel_marcas_cmp = st.multiselect("Marcas (2–5)",
-                                    options=marcas_opts,
-                                    default=marcas_opts[:3],
-                                    max_selections=5,
-                                    key="cmp_brands")
-    bases_cmp = st.multiselect("Tipos (opcional)",
-                               options=SKIN_TYPE_CANONICAL_ORDER,
-                               key="cmp_bases")
-
-if not sel_marcas_cmp:
-    st.info("Selecione ao menos uma marca.")
-else:
-    rows = []
-    for mk in sel_marcas_cmp:
-        dd = df[df["marca"] == mk].copy()
-        if sel_cat != "(todas)":
-            dd = dd[dd["categoria"] == sel_cat]
-        if dd.empty:
-            continue
-        ex = explode_skin(dd)
-        per_prod = []
-        for prod, g in ex.groupby("nome"):
-            bases = set()
-            for t in g["tipo_pele"]:
-                bases.update(to_base_types(t))
-            for b in bases:
-                per_prod.append({"produto": prod, "tipo_base": b, "marca": mk})
-        if per_prod:
-            rows.extend(per_prod)
-    cmp_df = pd.DataFrame(rows)
-    if cmp_df.empty:
-        st.info("Sem dados para comparar com os filtros atuais.")
-    else:
-        dist = (cmp_df.groupby(["tipo_base","marca"])["produto"].nunique().reset_index(name="produtos"))
-        if bases_cmp:
-            dist = dist[dist["tipo_base"].isin(bases_cmp)]
-        order_types = [t for t in SKIN_TYPE_CANONICAL_ORDER if t in dist["tipo_base"].unique()]
-        figc = px.bar(
-            dist, x="tipo_base", y="produtos", color="marca",
-            barmode="group", color_discrete_sequence=SEQ,
-            category_orders={"tipo_base": order_types},
-            labels={"produtos":"Nº de produtos", "tipo_base":"Tipo de pele"}
+        by_prod = (
+            exp.groupby(
+                ["marca","nome","categoria","beneficios","ingredientes","preco","quantidade_valor","quantidade_unidade"],
+                dropna=False
+            )["tipo_pele"]
+            .agg(product_base_set_series)
+            .reset_index(name="bases")
         )
-        style_axes(figc, height=CHART_H)
-        figc.update_layout(legend=dict(font=dict(size=LEGEND_FONT_SIZE)))
-        st.plotly_chart(figc, use_container_width=True)
 
-st.markdown("---")
+        def classify_product(bases: set[str], selected: list[str]) -> list[str]:
+            """Retorna lista de buckets onde o produto se encaixa"""
+            buckets = []
+            sel_set = set(selected)
 
-# ========= PESQUISA (lista estilizada) =========
-st.markdown("### Pesquisa por Tipo de Pele (lista)")
+            # 1. Se o produto tem 'todos os tipos' e só isso, entra APENAS
+            if bases == {"todos os tipos"}:
+                buckets.append("APENAS: todos os tipos")
+                return buckets  # <-- sai daqui pra não duplicar na categoria
 
-colp1, colp2, colp3 = st.columns([1.2, 1, 1])
-with colp1:
-    q = st.text_input("Buscar por tipo (ex.: sensível)", "", key="plist_q")
-with colp2:
-    brand_p = st.selectbox("Marca", options=["(todas)"] + brands, index=0, key="plist_brand")
-with colp3:
-    cat_p_opts = ["(todas)"] + sorted(df["categoria"].dropna().unique().tolist())
-    if CATEGORY_CANONICAL_ORDER:
-        present = [c for c in CATEGORY_CANONICAL_ORDER if c in cat_p_opts]
-        cat_p_opts = ["(todas)"] + present + [c for c in cat_p_opts if c not in present and c != "(todas)"]
-    cat_p = st.selectbox("Categoria", options=cat_p_opts, index=0, key="plist_cat")
+            # 2. Se contém 'todos os tipos' junto de outros, entra na categoria
+            if "todos os tipos" in bases:
+                buckets.append("CATEGORIA: Todos os tipos")
 
-df_p = df.copy()
-if brand_p != "(todas)":
-    df_p = df_p[df_p["marca"] == brand_p]
-if cat_p != "(todas)":
-    df_p = df_p[df_p["categoria"] == cat_p]
+            # 3. Verifica tipos individuais
+            for tipo in selected:
+                if bases == {tipo}:
+                    buckets.append(f"APENAS: {tipo}")
 
-ex_p = explode_skin(df_p)
-if q.strip():
-    ql = q.lower()
-    ex_p = ex_p[ex_p["tipo_pele"].str.lower().str.contains(ql, na=False)]
+            # 4. Combinação exata
+            if len(sel_set) > 1 and bases == sel_set:
+                tipos_str = " + ".join(sorted(selected))
+                buckets.append(f"EXATAMENTE: {tipos_str}")
 
-def qty_text_row(r: pd.Series) -> str:
-    return qty_text(r)
+            # 5. Contém algum tipo (sem ser exclusivo)
+            for tipo in selected:
+                if tipo in bases and bases != {tipo} and bases != sel_set:
+                    buckets.append(f"CONTÉM: {tipo}")
 
-def brl_fmt(x):
-    return brl(x)
+            return buckets
 
-if ex_p.empty:
-    st.info("Nenhum produto encontrado.")
-else:
-    base_products = (ex_p.groupby("nome")
-                        .agg(marca=("marca","first"),
-                             categoria=("categoria","first"),
-                             preco=("preco","first"),
-                             quantidade=("quantidade","first"),
-                             quantidade_valor=("quantidade_valor","first"),
-                             quantidade_unidade=("quantidade_unidade","first"),
-                             tipos=("tipo_pele", lambda s: ", ".join(sorted(set(s)))))
-                        .reset_index())
 
-    st.markdown("<div class='list-wrap'>", unsafe_allow_html=True)
-    for _, r in base_products.iterrows():
-        price = brl_fmt(r.get("preco"))
-        qty   = qty_text_row(r)
-        tipos_txt = r.get("tipos","—")
-        st.markdown(
-            f"""
-            <div class="row">
-              <div class="r-left">
-                <div class="name">{r.get('nome','')}</div>
-                <div class="brand">{r.get('marca','')}</div>
-                <div style="margin-top:6px;"><span class="pill">{r.get('categoria') or "—"}</span></div>
-              </div>
-              <div>
-                <div class="r-price">{price}</div>
-                <div class="r-qty">{qty}</div>
-              </div>
-              <div class="r-mid">
-                <div><b>Tipos:</b> {tipos_txt}</div>
-              </div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    st.markdown("</div>", unsafe_allow_html=True)
+        bucket_rows = []
+        for _, row in by_prod.iterrows():
+            for bucket in classify_product(row["bases"], sel_types):
+                new_row = row.to_dict()
+                new_row["bucket"] = bucket
+                bucket_rows.append(new_row)
+        
+        if not bucket_rows:
+            st.info("Nenhum produto atende à seleção.")
+        else:
+            by_prod_exploded = pd.DataFrame(bucket_rows)
+
+            bucket_order = []
+            bucket_order.append("CATEGORIA: Todos os tipos")
+            for tipo in sel_types:
+                bucket_order.append(f"APENAS: {tipo}")
+            if len(sel_types) > 1:
+                tipos_str = " + ".join(sorted(sel_types))
+                bucket_order.append(f"EXATAMENTE: {tipos_str}")
+            for tipo in sel_types:
+                bucket_order.append(f"CONTÉM: {tipo}")
+
+            for marca in sel_brands:
+                sub = by_prod_exploded[by_prod_exploded["marca"] == marca]
+                if sub.empty:
+                    continue
+                
+                st.markdown(f"<div class='brand-header'>{marca}</div>", unsafe_allow_html=True)
+                
+                for bucket in bucket_order:
+                    tb = sub[sub["bucket"] == bucket].copy()
+                    if tb.empty:
+                        continue
+                    
+                    st.markdown(f"<div class='bucket-title'>{bucket}</div>", unsafe_allow_html=True)
+                    
+                    tb["Preço"] = tb["preco"].apply(fmt_price)
+                    tb["Quantidade"] = tb.apply(lambda r: fmt_qtd(r["quantidade_valor"], r["quantidade_unidade"]), axis=1)
+                    
+                    display_tb = tb[["nome","categoria","Quantidade","Preço","beneficios","ingredientes"]].rename(columns={
+                        "nome": "Produto",
+                        "categoria": "Categoria",
+                        "beneficios": "Benefícios",
+                        "ingredientes": "Ingredientes"
+                    }).fillna("—").drop_duplicates()
+                    
+                    st.dataframe(display_tb, width="stretch", hide_index=True)
+
+            # ================================
+            # 🔽 GRÁFICO RESUMO (único)
+            # ================================
+            st.markdown("---")
+            st.markdown("### Visualizações resumidas da sua seleção")
+            st.markdown("""
+<div class='mode-description'>
+<b>O que você vê aqui?</b><br>
+• <b>Por marca × bucket</b>: quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).<br>
+</div>
+""", unsafe_allow_html=True)
+
+            agg_bucket = (
+                by_prod_exploded
+                .groupby(["marca","bucket"])["nome"]
+                .nunique()
+                .reset_index(name="produtos")
+            )
+            agg_bucket["bucket"] = pd.Categorical(agg_bucket["bucket"], categories=bucket_order, ordered=True)
+            agg_bucket = agg_bucket.sort_values(["bucket","marca"])
+
+            bar_mode = st.radio("Modo", ["Empilhado", "Agrupado"], horizontal=True, key="g_sum_mode")
+            barmode = "stack" if bar_mode == "Empilhado" else "group"
+
+            fig_sum = px.bar(
+                agg_bucket, x="marca", y="produtos", color="bucket", barmode=barmode,
+                color_discrete_sequence=SEQ,
+                labels={"marca":"Marca", "produtos":"Nº de produtos", "bucket":"Grupo"},
+            )
+            fig_sum.update_traces(
+                hovertemplate="<b>%{x}</b><br>Grupo: <b>%{fullData.name}</b><br>Produtos: <b>%{y}</b><extra></extra>"
+            )
+
+            # altura maior p/ legenda caber; margem direita já está no style_axes
+            style_axes(fig_sum, height=720)
+            st.plotly_chart(fig_sum, width="stretch")
