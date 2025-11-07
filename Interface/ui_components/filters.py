@@ -53,7 +53,7 @@ def render_filters_por_categoria(df: pd.DataFrame) -> Tuple[List[str], List[str]
         st.session_state["_fallback_marcas"] = sel_m
 
     #  Filtro de Categoria 
-    st.markdown("<span class='filter-label'>Categoria</span>", unsafe_allow_html=True)
+    st.markdown("<span class='filter-label'>Escolha Uma Categoria</span>", unsafe_allow_html=True)
     cat_opts = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else []
 
     if not cat_opts:
@@ -95,7 +95,7 @@ def render_filters_por_marca(df: pd.DataFrame) -> Tuple[str, str]:
     """, unsafe_allow_html=True)
 
     #  Filtro de Marca 
-    st.markdown("<span class='filter-label'>Marca</span>", unsafe_allow_html=True)
+    st.markdown("<span class='filter-label'>Escolha Uma Marca</span>", unsafe_allow_html=True)
 
     if "_source_file" in df.columns:
         files = sorted(df["_source_file"].dropna().unique().tolist())
@@ -129,7 +129,7 @@ def render_filters_por_marca(df: pd.DataFrame) -> Tuple[str, str]:
         )
 
     st.markdown(
-        "<p style='font-size:16px; color:#666; font-style:italic; margin-top:10px;'>Todas as categorias disponíveis para esta marca</p>",
+        "<p style='font-size:16px; color:#666; font-style:italic; margin-top:10px;'>O gráfico exibirá a distribuição de produtos por categoria apenas para a marca selecionada.</p>",
         unsafe_allow_html=True
     )
 

@@ -1,10 +1,7 @@
-# pages/5_Tipos_de_Pele.py
 from __future__ import annotations
 
-# ---- Base centralizada: st, pd, px, np, load_data, color_sequence, modelos, Path, etc. ----
 from include import *
 
-# ===== Paleta local e constantes visuais =====
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
 
@@ -18,19 +15,17 @@ def subtext_color(): return "#555"
 def panel_bg(): return "#ffffff"
 def neutral_border(): return "#ececf1"
 
-# ===== Estilo e cabeçalho da página =====
+# Estilo e cabeçalho da página
 TITLE_TEXT   = "Tipos de Pele"
 TAGLINE_TEXT = (
-    "Tipos de pele atendidas pelos produtos, podendo ser: acneica, com cicatrizes, "
-    "com manchas, com olheiras, com poros dilatados, madura, mista, normal, oleosa, "
-    "seca, sensível ou todos os tipos."
+    "Classificação dos tipos de pele contemplados pelos produtos: acneica, com cicatrizes, com manchas, com olheiras, com poros dilatados, madura, mista, normal, oleosa, seca, sensível ou todos os tipos"
 )
 TITLE_SIZE   = 56
 TAGLINE_SIZE = 24
 CHART_H = 640
 AXIS_TITLE_SIZE = 22
 AXIS_TICK_SIZE  = 20
-LEGEND_FONT_SIZE = 22
+LEGEND_FONT_SIZE = 32
 LEGEND_TITLE_SIZE = 30
 TOOLTIP_FONT_SIZE = 22
 BARGAP = 0.18
@@ -144,7 +139,7 @@ div[data-testid="stDataFrame"] thead th {{
 
 div[data-testid="stDataFrame"] tbody td {{
     padding: 16px 18px !important;
-    font-size: 26px !important;
+    font-size: 20px !important;
     white-space: normal !important;
     word-wrap: break-word !important;
     word-break: break-word !important;
@@ -215,17 +210,28 @@ def explode_skin(df: pd.DataFrame) -> pd.DataFrame:
 def style_axes(fig, height: int = CHART_H):
     fig.update_layout(
         font=dict(color=text_color()),
-        xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE, color=text_color()),
-                   tickfont=dict(size=AXIS_TICK_SIZE, color=text_color())),
-        yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE, color=text_color()),
-                   tickfont=dict(size=AXIS_TICK_SIZE, color=text_color())),
+        xaxis=dict(
+            title_font=dict(size=AXIS_TITLE_SIZE, color=text_color()),
+            tickfont=dict(size=AXIS_TICK_SIZE, color=text_color())
+        ),
+        yaxis=dict(
+            title_font=dict(size=AXIS_TITLE_SIZE, color=text_color()),
+            tickfont=dict(size=AXIS_TICK_SIZE, color=text_color())
+        ),
         height=height,
-        paper_bgcolor=panel_bg(), plot_bgcolor=panel_bg(),
+        paper_bgcolor=panel_bg(),
+        plot_bgcolor=panel_bg(),
         title=None,
-        margin=dict(t=60, b=70, l=20, r=260),  # espaço p/ legenda à direita
+        margin=dict(t=60, b=70, l=20, r=260),  # espaço p ara legenda à direita
         hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE, font_color="black", bgcolor="white"),
-        legend=dict(font=dict(size=LEGEND_FONT_SIZE), x=1.02, y=1, xanchor="left", yanchor="top"),
-        legend_title_text="Grupo",
+        legend=dict(
+            font=dict(size=LEGEND_FONT_SIZE),
+            x=1.02, y=1, xanchor="left", yanchor="top"
+        ),
+        legend_title=dict(
+            text="Marca",
+            font=dict(size=LEGEND_TITLE_SIZE) 
+        ),
         annotations=[]
     )
     return fig
@@ -264,9 +270,9 @@ st.markdown(f"<div class='page-sub'>{TAGLINE_TEXT}</div>", unsafe_allow_html=Tru
 st.markdown("### Todos os tipos de pele por marca")
 st.markdown("""
 <div class='mode-description'>
-    <b>Neste modo:</b> Este gráfico mostra a distribuição de todos os produtos por tipo de pele para todas as marcas. 
-    Use a opção Métrica para alternar entre contagem absoluta dos produtos ou participação percentual (%).
-    Use os botões Anterior/Próximo para navegar se o gráfico ficar muito extenso.
+    <b>Neste modo:</b> Este gráfico mostra a distribuição de todos os produtos por tipo de pele para todas as marcas. <br>
+    Use a opção <b>Métrica</b> para alternar entre contagem absoluta dos produtos ou participação percentual (%). <br>
+    Use os botões <b>Anterior/Próximo</b> para navegar em mais páginas se o gráfico ficar muito extenso.
 </div>
 """, unsafe_allow_html=True)
 
@@ -300,7 +306,7 @@ else:
     all_types = dist_all["tipo_base"].unique().tolist()
     order_types = [t for t in SKIN_TYPE_CANONICAL_ORDER if t in all_types] or sorted(all_types)
 
-    # paginação só com botões
+    # paginação com botões
     PAGE_SIZE = min(10, len(order_types)) if len(order_types) else 10
     if "g1_page" not in st.session_state: st.session_state["g1_page"] = 0
     start = st.session_state["g1_page"] * PAGE_SIZE
@@ -310,11 +316,11 @@ else:
     colp1, colp_mid, colp2 = st.columns([1,6,1])
     with colp1:
         disable_prev = st.session_state["g1_page"] == 0
-        if st.button("Anterior", key="g1_prev", type="secondary", disabled=disable_prev):
+        if st.button("Página Anterior", key="g1_prev", type="secondary", disabled=disable_prev):
             st.session_state["g1_page"] = max(0, st.session_state["g1_page"] - 1)
     with colp2:
         disable_next = end >= len(order_types)
-        if st.button("Próximo", key="g1_next", type="secondary", disabled=disable_next):
+        if st.button("Próxima Página", key="g1_next", type="secondary", disabled=disable_next):
             st.session_state["g1_page"] = st.session_state["g1_page"] + 1
 
     dist_all = dist_all[dist_all["tipo_base"].isin(slice_types)]
@@ -471,17 +477,14 @@ else:
                     
                     st.dataframe(display_tb, width="stretch", hide_index=True)
 
-            # ================================
-            # 🔽 GRÁFICO RESUMO (único)
-            # ================================
             st.markdown("---")
             st.markdown("### Visualizações resumidas da sua seleção")
             st.markdown("""
-<div class='mode-description'>
-<b>O que você vê aqui?</b><br>
-• <b>Por marca × bucket</b>: quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).<br>
-</div>
-""", unsafe_allow_html=True)
+                <div class='mode-description'>
+                <b>O que você vê aqui?</b><br>
+                • <b>Por marca × bucket</b>: quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).<br>
+                </div>
+            """, unsafe_allow_html=True)
 
             agg_bucket = (
                 by_prod_exploded
@@ -498,12 +501,11 @@ else:
             fig_sum = px.bar(
                 agg_bucket, x="marca", y="produtos", color="bucket", barmode=barmode,
                 color_discrete_sequence=SEQ,
-                labels={"marca":"Marca", "produtos":"Nº de produtos", "bucket":"Grupo"},
+                labels={"marca":"Marca", "produtos":"Nº de produtos", "bucket":"Marca"},
             )
             fig_sum.update_traces(
-                hovertemplate="<b>%{x}</b><br>Grupo: <b>%{fullData.name}</b><br>Produtos: <b>%{y}</b><extra></extra>"
+                hovertemplate="<b>%{x}</b><br>Marca: <b>%{fullData.name}</b><br>Produtos: <b>%{y}</b><extra></extra>"
             )
 
-            # altura maior p/ legenda caber; margem direita já está no style_axes
             style_axes(fig_sum, height=720)
             st.plotly_chart(fig_sum, width="stretch")

@@ -84,7 +84,7 @@ def render_kpis(df: pd.DataFrame, show_breakdown: bool = True) -> None:
             f"""
             <div class="kpi" style="width:250px; padding:15px;">
                <div class="kpi-value">{total_produtos:,}</div>
-               <div class="kpi-label" style="font-size:16px;">Produtos</div>
+               <div class="kpi-label" style="font-size:25px;">Produtos</div>
             </div>
             """.replace(",", "."),
             unsafe_allow_html=True,
@@ -95,7 +95,7 @@ def render_kpis(df: pd.DataFrame, show_breakdown: bool = True) -> None:
             f"""
             <div class="kpi" style="width:250px; padding:15px;">
                <div class="kpi-value">{total_csvs:,}</div>
-               <div class="kpi-label" style="font-size:16px;">Marcas</div>
+               <div class="kpi-label" style="font-size:25px;">Marcas</div>
             </div>
             """.replace(",", "."),
             unsafe_allow_html=True,
@@ -106,7 +106,7 @@ def render_kpis(df: pd.DataFrame, show_breakdown: bool = True) -> None:
             f"""
             <div class="kpi" style="width:250px; padding:15px;">
                <div class="kpi-value">{total_categorias:,}</div>
-               <div class="kpi-label" style="font-size:16px;">Categorias</div>
+               <div class="kpi-label" style="font-size:25px;">Categorias</div>
             </div>
             """.replace(",", "."),
             unsafe_allow_html=True,
@@ -117,7 +117,7 @@ def render_kpis(df: pd.DataFrame, show_breakdown: bool = True) -> None:
             f"""
             <div class="kpi" style="width:250px; padding:15px;">
                <div class="kpi-value">{total_beneficios:,}</div>
-               <div class="kpi-label" style="font-size:16px;">Benefícios</div>
+               <div class="kpi-label" style="font-size:25px;">Benefícios</div>
             </div>
             """.replace(",", "."),
             unsafe_allow_html=True,
@@ -128,7 +128,7 @@ def render_kpis(df: pd.DataFrame, show_breakdown: bool = True) -> None:
             f"""
             <div class="kpi" style="width:250px; padding:15px;">
                <div class="kpi-value">{total_ingredientes:,}</div>
-               <div class="kpi-label" style="font-size:16px;">Ingredientes Ativos</div>
+               <div class="kpi-label" style="font-size:25px;">Ingredientes Ativos</div>
             </div>
             """.replace(",", "."),
             unsafe_allow_html=True,
@@ -139,7 +139,7 @@ def render_kpis(df: pd.DataFrame, show_breakdown: bool = True) -> None:
             f"""
             <div class="kpi" style="width:250px; padding:15px;">
                <div class="kpi-value">{total_tipos_pele:,}</div>
-               <div class="kpi-label" style="font-size:16px;">Tipos de pele</div>
+               <div class="kpi-label" style="font-size:25px;">Tipos de pele</div>
             </div>
             """.replace(",", "."),
             unsafe_allow_html=True,

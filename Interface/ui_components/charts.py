@@ -164,7 +164,7 @@ def chart_produtos_por_categoria(
         total_categorias = 1 
         _render_summary_cards(
             total_left=total_produtos, label_left="Total de Produtos",
-            total_right=total_categorias, label_right="Total de Categoria Selecionadas",
+            total_right=total_categorias, label_right="Total de Categorias Selecionadas",
             seq=seq_cards
         )
 
@@ -246,7 +246,7 @@ def chart_categorias_por_marca(
         dist = dist.sort_values(["quantidade", "categoria"], ascending=[False, True]).reset_index(drop=True)
 
     seq = color_sequence(palette_name)
-    tabs = st.tabs(["Barras", "Rosca"])
+    tabs = st.tabs(["Barras em N° de Produtos", "Rosca em Porcentagem %"])
 
     # TAB: GRÁFICO DE BARRAS
     with tabs[0]:

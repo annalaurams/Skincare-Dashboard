@@ -1,8 +1,6 @@
 from __future__ import annotations
-from include import *   # traz st, pd, px, color_sequence, modelos, np, go, Path, re, Optional, List, Tuple
+from include import * 
 
-
-# ==================== CONFIG DA PÁGINA ====================
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
 
@@ -16,15 +14,15 @@ def text_color(): return "#262730"
 def subtext_color(): return "#555"
 def panel_bg(): return "#ffffff"
 
-TITLE_TEXT   = "Preço & Quantidade"
-TAGLINE_TEXT = "Analise preços, volume e variações por categoria, ingredientes, benefícios e tipos de pele."
+TITLE_TEXT   = "Panorama de Preços"
+TAGLINE_TEXT = "Veja preços, tamanhos (g/mL) e variações por marca, categoria, ingredientes, benefícios e tipos de pele."
 TITLE_SIZE, TAGLINE_SIZE = 60, 24
 AXIS_TITLE_SIZE, AXIS_TICK_SIZE = 22, 22
 LEGEND_FONT_SIZE = 26
 CHART_HEIGHT = 640
 SCATTER_MARKER_SIZE = 22
 
-# ==================== HELPERS ====================
+# HELPERS
 def _pretty_from_source(fname: str) -> str:
     stem = Path(fname).stem
     for suf in ["_products", "_skincare", "_cosmetics", "_dados"]:
@@ -64,7 +62,7 @@ def order_by_canonical(series: pd.Series, canonical: List[str]) -> List[str]:
             ordered.append(x)
     return ordered
 
-# ===== Conversão g ↔ mL (heurística por categoria) =====
+#  Conversão g ↔ mL (heurística por categoria) 
 DENSIDADE = {
     "sérum": 0.95, "serum": 0.95, "hidratante": 1.05, "creme": 1.10,
     "manteiga": 1.15, "óleo": 0.90, "oleo": 0.90, "gel": 1.02,
@@ -93,7 +91,7 @@ def to_mls(val, unit, cat):
         return float(val) / d if d > 0 else np.nan
     return np.nan
 
-# ==================== LOADER DOS CSVs (PASTA DAS MARCAS) ====================
+# LOADER DOS CSVs (PASTA DAS MARCAS)
 DATA_DIR = Path("/home/usuario/Área de trabalho/CEFET/Dados/Arquivo")
 
 @st.cache_data(show_spinner=True)
@@ -167,7 +165,7 @@ def load_brand_csvs(data_dir: Path = DATA_DIR) -> pd.DataFrame:
     full["preco"] = full["preco"].apply(parse_money_to_float)
     return full
 
-# ==================== DADOS ====================
+# DADOS
 df_all = load_brand_csvs()
 df_all["q_g"]  = df_all.apply(lambda r: to_grams(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
 df_all["q_ml"] = df_all.apply(lambda r: to_mls(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
@@ -188,7 +186,6 @@ else:
 CAT_LIST = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else \
            sorted(df_all["categoria"].dropna().unique().tolist())
 
-# ==================== EXPLODE (com BRAND_COL dentro) ====================
 def explode_dimension(df_in: pd.DataFrame, col: str, target_name: str,
                       whitelist: Optional[List[str]] = None,
                       brand_col: str = BRAND_COL) -> pd.DataFrame:
@@ -214,11 +211,11 @@ def explode_dimension(df_in: pd.DataFrame, col: str, target_name: str,
             })
     return pd.DataFrame(rows)
 
-# ==================== HEADER ====================
+# HEADER
 st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
 st.markdown(f"<div style='margin:.25rem 0 1rem 0; color:{subtext_color()}; font-size:{TAGLINE_SIZE}px'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
 
-# ======= NOTA SIMPLES (igual ao seu print) =======
+#  NOTA SIMPLES 
 st.markdown("""
 <style>
 .simple-note {
@@ -232,12 +229,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 st.markdown(
-    "<div class='simple-note'><b>Nota:</b> Este painel consolida dados coletados dos sites oficiais das marcas brasileiras analisadas. "
-    "Filtros e contagens consideram <i>produtos distintos</i>. Algumas informações podem ter sido complementadas manualmente quando ausentes.</div>",
+    "<div class='simple-note'>"
+    "<b>Nota:</b> Este painel consolida dados coletados nos sites oficiais das marcas brasileiras analisadas."
+    "<br>Selecione <b>uma marca</b> e, opcionalmente, <b>uma categoria</b> para filtrar os resultados."
+    "<br>Com esses filtros, você verá os <b>KPIs</b>: total de produtos da seleção, <b>marca</b>, <b>preço médio</b>, <b>mínimo</b> e <b>máximo</b>."
+    "<br>Também exibimos os <b>Top 3 produtos mais caros</b> e os <b>Top 3 mais baratos</b> com base nos filtros aplicados."
+    "</div>",
     unsafe_allow_html=True
 )
 
-# ==================== ESTILOS EXTRAS ====================
+# ESTILOS EXTRAS
 st.markdown(f"""
 <style>
 .cardgrid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }}
@@ -276,7 +277,7 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== FILTROS INICIAIS ====================
+# FILTROS INICIAIS
 st.markdown(f"<div style='font-size:32px; font-weight:800; color:{accent(0)}; margin:1.2rem 0 1rem 0;'>Filtros Iniciais</div>", unsafe_allow_html=True)
 fc1, fc2 = st.columns([1.1, 1])
 with fc1:
@@ -288,7 +289,7 @@ df_kpi = df_all[df_all[BRAND_COL] == sel_brand_label].copy()
 if sel_cat != "(todas)":
     df_kpi = df_kpi[df_kpi["categoria"] == sel_cat]
 
-# ==================== KPIs ====================
+# KPIs
 k1, k2, k3, k4 = st.columns(4)
 total_prod = len(df_kpi)
 preco_med  = df_kpi["preco"].mean() if not df_kpi.empty else np.nan
@@ -310,7 +311,7 @@ with k2: kpi_box("Preço médio", brl(preco_med), 1)
 with k3: kpi_box("Preço mínimo", brl(preco_min), 2)
 with k4: kpi_box("Preço máximo", brl(preco_max), 3)
 
-# ==================== CARDS: TOP 3 CAROS/BARATOS ====================
+# CARDS: TOP 3 CAROS/BARATOS
 st.markdown(f"<div style='font-size:32px; font-weight:800; color:{accent(1)}; margin:2rem 0 1rem 0;'>Produtos mais caros e mais baratos</div>", unsafe_allow_html=True)
 
 def _fmt_qtd(v,u):
@@ -370,7 +371,7 @@ with right:
 
 st.markdown("---")
 
-# ==================== Preço × Quantidade (marca selecionada) ====================
+# Preço × Quantidade (marca selecionada)
 st.markdown(
     f"<div style='font-size:32px; font-weight:800; color:{accent(2)}; margin:2rem 0 1rem 0;'>Relação Preço × Quantidade</div>",
     unsafe_allow_html=True
@@ -502,18 +503,23 @@ else:
         st.plotly_chart(fig_sc, use_container_width=True, config={'displayModeBar': False})
 
         st.markdown(
-            "<div class='simple-note'><b>Nota:</b> Cada ponto representa um produto da marca selecionada. "
-            "A unidade pode ser g, mL ou <i>Original</i> (misturada conforme veio do CSV). O eixo de preço é fixo em 0–150.</div>",
+            "<div class='simple-note'>"
+            "<b>Nota:</b> Cada ponto representa um produto da marca selecionada, e o <i>tooltip</i> exibe as informações completas desse produto."
+            "<br>A unidade da quantidade pode ser mostrada de três formas: produtos em gramas</b>, <b>mL</b>, ou no formato <b>Original</b>"
+            "<br>A legenda ao lado diferencia as categorias dos produtos."
+            "<br>Este gráfico mostra a relação entre o <b>preço (R$)</b> e a <b>quantidade/tamanho</b> de cada produto."
+            "</div>",
             unsafe_allow_html=True
         )
 
-# ==================== UTIL: agregação min/méd/máx ====================
+
+# UTIL: agregação min/méd/máx
 def agg_min_med_max(df: pd.DataFrame, by: List[str]) -> pd.DataFrame:
     g = df.groupby(by, dropna=False)["preco"].agg(['min','mean','max','count']).reset_index()
     g.rename(columns={"min":"preco_min","mean":"preco_med","max":"preco_max","count":"n_produtos"}, inplace=True)
     return g
 
-# ===== tabela com subtítulo por marca =====
+#  tabela com subtítulo por marca 
 def render_details_table_products_grouped_by_brand(df: pd.DataFrame, extra_cols: List[str], brand_col: str = BRAND_COL):
     base_cols = ["nome","categoria","preco"]  # marca vira título do bloco
     all_cols = [c for c in (base_cols + extra_cols) if c in df.columns]
@@ -532,7 +538,7 @@ def render_details_table_products_grouped_by_brand(df: pd.DataFrame, extra_cols:
         html = f"<table class='details-table'><thead><tr>{thead}</tr></thead><tbody>{''.join(rows_html)}</tbody></table>"
         st.markdown(html, unsafe_allow_html=True)
 
-# ===== Paginação (sem seletor duplicado) =====
+#  Paginação (sem seletor duplicado) 
 def paginate(df: pd.DataFrame, key_base: str, page_size: int) -> Tuple[pd.DataFrame, int, int]:
     total = len(df)
     idx_key = f"{key_base}_idx"
@@ -549,13 +555,12 @@ def paginate(df: pd.DataFrame, key_base: str, page_size: int) -> Tuple[pd.DataFr
     st.caption(f"Mostrando {start+1}–{end} de {total}")
     return df.iloc[start:end], start, end
 
-# ==================== ANÁLISES COMPARATIVAS ====================
+# ANÁLISES COMPARATIVAS
 st.markdown(f"<div style='font-size:32px; font-weight:800; color:{accent(3)}; margin:2rem 0 1rem 0;'>Análises Comparativas</div>", unsafe_allow_html=True)
 st.markdown(f"<div class='sectioncap'>Escolha o fluxo de análise</div>", unsafe_allow_html=True)
 
 analysis_mode = st.radio("Fluxo", ["Fixar uma marca", "Comparar marcas"], horizontal=True, key="analysis_mode")
 
-# ---------- Fluxo A: fixar uma marca ----------
 if analysis_mode == "Fixar uma marca":
     col_a1, col_a2, col_a3 = st.columns([1.2, 1, 0.8])
     with col_a1:
@@ -621,10 +626,21 @@ if analysis_mode == "Fixar uma marca":
         st.plotly_chart(figA, use_container_width=True, config={'displayModeBar': False})
 
         st.markdown(
-            "<div class='simple-note'>A barra mostra o <b>preço médio</b> por item da dimensão; os losangos indicam <b>mínimo</b> e <b>máximo</b>. "
-            "O tooltip exibe também o <b>N de produtos</b> agregados. Eixo de preço fixo em 0–150.</div>",
+            "<div class='simple-note'>"
+            "<b>Nota:</b> Nesta seção, você pode seguir dois fluxos de análise:"
+            "<br><b>• Fixar uma marca:</b> escolha uma marca e depois selecione uma dimensão (Categoria, Ingrediente, Benefício ou Tipo de Pele). "
+            "Assim, o painel mostra o preço <b>mínimo</b>, <b>máximo</b> e <b>médio</b> dos produtos associados a cada item dessa dimensão."
+            "<br><b>• Comparar marcas:</b> escolha uma única dimensão e selecione um item específico dela (por exemplo, uma categoria ou um ingrediente). "
+            "As marcas que possuem produtos com esse item podem então ser comparadas entre si."
+            "<br>O gráfico utiliza barras para representar o <b>preço médio</b> e losangos para o <b>mínimo</b> e o <b>máximo</b> de cada grupo."
+            "<br>O <i>tooltip</i> também exibe o <b>N de produtos</b> que compõem cada agregação."
+            "<br>Abaixo do gráfico é exibida uma tabela com os produtos que atendem ao filtro selecionado, incluindo informações como "
+            "<b>nome</b>, <b>preço</b>, <b>ingredientes</b>, <b>benefícios</b> e <b>tipos de pele</b>."
+            "<br>O número de itens por página pode ser ajustado, e você pode navegar pelos resultados com os botões de paginação."
+            "</div>",
             unsafe_allow_html=True
         )
+
 
         st.markdown(f"<div class='sectioncap'>Ver detalhes — {brand_A} por {facet_A.lower()}</div>", unsafe_allow_html=True)
         extra = st.multiselect("Colunas extras para ver nos detalhes", options=["ingredientes","beneficios","tipo_pele"], default=[], key=f"extra_cols_fix_{facet_A}")

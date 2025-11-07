@@ -117,9 +117,9 @@ st.markdown(
 <br>
 <strong>Escopo considerado:</strong> não incluímos itens promocionais e nem combos, <em>apenas produtos individuais</em>.
 <br>
-<strong>Limpeza e padronização:</strong> as variáveis analisadas (tipos de pele, benefícios, ingredientes ativos, preço, quantidade e categorias) foram normalizadas para permitir comparações entre marcas e características.
+<strong>Limpeza e padronização:</strong> as variáveis analisadas (categorias, benefícios, ingredientes ativos, preço, quantidade e tipos de pele) foram normalizadas para permitir comparações entre marcas e características.
 <center>
-<a href="https://github.com/annalaurams" target="_blank" class="repo-button">Código neste repositório no GitHub</a>
+<a href="https://github.com/annalaurams" target="_blank" class="repo-button">Código disponível neste repositório no GitHub</a>
 </center>
 </div>
 </div>
@@ -144,7 +144,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.markdown(
-    "<span style='font-size:28px; color:#363636; font-weight:500;'>Análise completa dos dados de produtos de cuidados com o rosto de diferentes marcas brasileiras.</span>",
+    "<span style='font-size:28px; color:#363636; font-weight:500;'>Análise dos dados de produtos de cuidados com o rosto de diferentes marcas brasileiras.</span>",
     unsafe_allow_html=True
 )
 
@@ -192,7 +192,7 @@ df = load_data()
 render_kpis(df)
 st.markdown("---")
 
-st.markdown("<div class='section-title'>Análise de Produtos</div>", unsafe_allow_html=True)
+st.markdown("<div class='section-title'>Análise de Produtos por Categoria</div>", unsafe_allow_html=True)
 
 modo_tabs = st.tabs(["Fixar Uma Categoria", "Fixar uma Marca"])
 
@@ -221,10 +221,10 @@ with modo_tabs[0]:
 # MODO 2: POR MARCA (1 marca, TODAS as categorias)
 with modo_tabs[1]:
     st.markdown(
-        "<div class='mode-description'><b>Neste modo:</b> Selecione apenas uma marca e veja a quantidade de produtos em cada categoria que ela possui.</div>",
+        "<div class='mode-description'><b>Neste modo:</b> Selecione apenas uma marca e veja a quantidade de produtos em todas as categorias que ela possui.</div>",
         unsafe_allow_html=True
     )
-    st.markdown("<div class='section-sub'>Aplicar Filtros</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-sub'>Aplicar Filtros Para Gerar o Gráfico</div>", unsafe_allow_html=True)
     
     sel_marca, order_option_marca = render_filters_por_marca(df)
     df_chart_marca = apply_filters(df, marcas=None, cats=None, source_files=[sel_marca] if sel_marca else [])

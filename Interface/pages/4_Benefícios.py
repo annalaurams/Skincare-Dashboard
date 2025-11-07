@@ -1,17 +1,20 @@
-# pages/4_Benefícios.py
 from __future__ import annotations
 
-# ---- Base centralizada: st, pd, px, load_data, color_sequence, modelos, np, Path, List etc. ----
 from include import *
+from pathlib import Path
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+from typing import List
 
-# ===== Config local só da paleta (NÃO chamar set_page_config/apply_base_theme aqui) =====
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
 
+apply_base_theme()
 apply_palette_css(st.session_state["palette_name"])
 SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f3"]
 
-# ===== Constantes visuais da página =====
 TITLE_TEXT           = "Benefícios: O que os Produtos Prometem"
 TAGLINE_TEXT         = "Veja quais benefícios mais se destacam nas formulações e os efeitos mais comuns entre os produtos das marcas"
 TITLE_SIZE           = 60
@@ -37,22 +40,6 @@ def subtext_color(): return "#555"
 def neutral_border(): return "#ebedf0"
 def panel_bg(): return "#ffffff"
 
-
-if "palette_name" not in st.session_state:
-    st.session_state["palette_name"] = "Solaris"
-
-apply_base_theme()
-apply_palette_css(st.session_state["palette_name"])
-SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f3"]
-
-def accent(i=0): return SEQ[i % len(SEQ)]
-def accent2(): return SEQ[1] if len(SEQ) > 1 else "#22c55e"
-def text_color(): return "#262730"
-def subtext_color(): return "#555"
-def neutral_border(): return "#ebedf0"
-def panel_bg(): return "#ffffff"
-
-# CSS
 st.markdown(f"""
 <style>
 .section-title {{ font-size:{SECTION_TITLE_SIZE}px; font-weight:700; color:{text_color()}; margin: 1rem 0 .5rem 0; }}
@@ -68,17 +55,10 @@ st.markdown(f"""
 }}
 div[data-baseweb="select"] {{ width: 100% !important; }}
 
-/* Label dos widgets (ex.: 'Visualização', 'Modo', etc.) maior */
-div[data-testid="stWidgetLabel"] p {{
-    font-size: 20px !important;
-}}
+/* Label dos widgets maior */
+div[data-testid="stWidgetLabel"] p {{ font-size: 20px !important; }}
 
-/* Opções dos radios maiores (Barras / Rosca / Orientação etc.) */
-.stRadio label span {{
-    font-size: 18px !important;
-}}
-
-/* Botões da distribuição */
+/* Botões Anterior/Próxima */
 .dist-nav .stButton>button {{
     background: {accent(0)}22 !important;
     border: 2px solid {accent(0)} !important;
@@ -89,13 +69,13 @@ div[data-testid="stWidgetLabel"] p {{
     border-radius: 14px !important;
 }}
 
-/* NOTAS / MODE DESCRIPTION — sem borda colorida */
+/* NOTAS */
 .note-box {{
     background: #f8f9fa;
     border: 1px solid {neutral_border()};
     border-left: none;
     padding: 1rem;
-    margin: 1rem 0 1.25rem 0;
+    margin: .5rem 0 1.25rem 0;
     border-radius: 10px;
     font-size: 17px;
     line-height: 1.5;
@@ -103,19 +83,14 @@ div[data-testid="stWidgetLabel"] p {{
 }}
 .note-box b {{ color: {text_color()}; }}
 
-/* Cabeçalho de marca (igual Tipos de pele) */
-.brand-header {{
-    background: linear-gradient(135deg, {accent(0)} 0%, {accent2()} 100%);
-    color: #fff;
-    padding: 18px 24px;
-    border-radius: 14px;
-    font-size: 28px;
-    font-weight: 900;
-    margin: 32px 0 16px 0;
-    box-shadow: 0 4px 12px {accent(0)}40;
+/* Cabeçalho de marca no estilo da página de Preço & Quantidade */
+.brand-caption {{
+  margin-top:18px; margin-bottom:6px; font-weight:900; font-size:22px; color:#fff;
+  padding:8px 14px; border-radius:14px;
+  background: linear-gradient(90deg, {accent(4)} 0%, {accent(2)} 100%);
 }}
 
-/* Buckets com tarja suave */
+/* Título de bucket */
 .bucket-title {{
     background: {accent(0)}15;
     color: {accent(0)};
@@ -127,59 +102,18 @@ div[data-testid="stWidgetLabel"] p {{
     border-left: 5px solid {accent(0)};
 }}
 
-/* DataFrame no padrão Tipos de pele (sem borda colorida) */
-div[data-testid="stDataFrame"] {{
-    border: 1px solid {neutral_border()} !important;
-    border-radius: 12px !important;
-    overflow: visible !important;
-}}
-div[data-testid="stDataFrame"] table {{
-    font-size: 16px !important;
-    line-height: 1.45 !important;
-}}
-div[data-testid="stDataFrame"] thead th {{
-    font-size: 18px !important;
-    font-weight: 700 !important;
-    padding: 10px 14px !important;
-    background-color: #fafafa !important;
-    color: {text_color()} !important;
-    white-space: nowrap !important;
-}}
-div[data-testid="stDataFrame"] tbody td {{
-    padding: 10px 14px !important;
-    font-size: 26px !important;
-    white-space: normal !important;
-    vertical-align: top !important;
-}}
+/* ====== TABELA NO MESMO ESTILO DA PÁGINA DE PREÇO & QUANTIDADE ====== */
+.details-table {{ width: 100%; border-collapse: collapse; margin-top: 1.2rem;
+  background: {panel_bg()}; border-radius: 18px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }}
+.details-table thead {{ background: linear-gradient(135deg, {accent(0)} 0%, {accent(1)} 100%); color: white; }}
+.details-table th {{ padding: 18px 20px; text-align: left; font-weight: 700; font-size: 18px; border-bottom: 3px solid rgba(255,255,255,.2); }}
+.details-table td {{ padding: 16px 20px; font-size: 17px; color: {text_color()}; border-bottom: 1px solid #f0f0f5; }}
+.details-table tbody tr:hover {{ background: linear-gradient(90deg, {accent(0)}0D 0%, transparent 100%); }}
+.details-table tbody tr:last-child td {{ border-bottom: none; }}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-/* ===== Ajuste do tamanho da fonte dentro das tabelas ===== */
-
-/* texto dentro das células da tabela */
-div[data-testid="stDataFrame"] tbody td div {
-    font-size: 42px !important;      /* 🔹 aumenta aqui o tamanho dos dados (ex: 24px, 26px, etc.) */
-    line-height: 1.5 !important;     /* altura da linha */
-    white-space: normal !important;  /* quebra de linha quando o texto é longo */
-    overflow: visible !important;
-}
-
-/* cabeçalho da tabela (Produto, Categoria, etc.) */
-div[data-testid="stDataFrame"] thead th div {
-    font-size: 42px !important;      /* 🔹 tamanho do texto do cabeçalho */
-    font-weight: 700 !important;
-}
-
-/* espaçamento geral da tabela */
-div[data-testid="stDataFrame"] table {
-    border-collapse: separate !important;
-    border-spacing: 0 6px !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
+# - Helpers -
 def alpha_sorted(opts: List[str]) -> List[str]:
     return sorted([o for o in opts if isinstance(o, str)], key=lambda s: s.casefold())
 
@@ -235,7 +169,7 @@ def fmt_qtd(v, u):
         v_str = str(v)
     return f"{v_str} {u}" if pd.notna(u) and str(u).strip() else v_str
 
-# Carrega dados & opções
+#  Dados & opções 
 df = load_data()
 
 uses_files = "_source_file" in df.columns and df["_source_file"].notna().any()
@@ -252,35 +186,36 @@ CAT_ALL  = alpha_sorted(CATEGORY_CANONICAL_ORDER or df.get("categoria", pd.Serie
 BEN_ALL  = alpha_sorted(BENEFIT_CANONICAL_ORDER or [])
 SKIN_ALL = alpha_sorted(SKIN_TYPE_CANONICAL_ORDER or [])
 
+#  Header 
 st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
 st.markdown(f"<div class='subtle' style='margin:.5rem 0 .75rem 0;'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
 
 st.markdown("""
 <div class="note-box">
-<b>Nota:</b> Este painel consolida dados coletados dos sites oficiais das marcas brasileiras analisadas.
-Filtros e contagens consideram <i>produtos distintos</i>. Algumas informações podem ter sido complementadas manualmente quando ausentes.
+<b>Como usar:</b> Escolha uma marca e, opcionalmente, uma categoria. O benefício mais usado considera <i>todos</i> os produtos da marca.
+O benefício exclusivo compara com as demais marcas do dataset.
 </div>
 """, unsafe_allow_html=True)
 
-# Filtros principais
+#  Filtros principais 
 st.markdown(f"<div class='section-title'>Filtros</div>", unsafe_allow_html=True)
 fc1, fc2 = st.columns([1.1, 1])
 with fc1:
-    sel_brand_label = st.selectbox("Marca (obrigatório)", options=BRAND_LABELS, index=0 if BRAND_LABELS else None)
+    sel_brand_label = st.selectbox("Escolha Uma Marca", options=BRAND_LABELS, index=0 if BRAND_LABELS else None)
     sel_brand_value = LABEL_MAP.get(sel_brand_label) if sel_brand_label else None
 with fc2:
-    sel_cat = st.selectbox("Categoria (opcional)", options=["(todas)"] + CAT_ALL, index=0)
+    sel_cat = st.selectbox("Categoria (uma específica ou todas)", options=["(todas)"] + CAT_ALL, index=0)
 
 if sel_brand_value is None:
     st.info("Selecione uma marca.")
     st.stop()
 
-# Base da marca
+#  Base da marca (com filtro de categoria) 
 df_brand = df[df["_source_file"] == sel_brand_value].copy() if uses_files else df[df["marca"] == sel_brand_label].copy()
 if sel_cat != "(todas)":
     df_brand = df_brand[df_brand["categoria"] == sel_cat]
 
-# Resumo
+#  Resumo 
 KPI_BORDER_PX = 3
 def summary_card(title: str, value: str, subtitle: str, color_idx: int = 0):
     st.markdown(
@@ -312,6 +247,7 @@ else:
     top_ben = top_s.index[0]
     top_count = int(top_s.iloc[0])
 
+# benefício exclusivo (dataset)
 exp_all = explode_benefits(df.copy())
 exclusivos = []
 if not exp_brand.empty and not exp_all.empty:
@@ -329,33 +265,49 @@ with kc2:
 
 st.markdown("---")
 
-# Distribuição de Benefícios (paginada)
+#  Distribuição de Benefícios (paginada) 
 st.markdown(f"<div class='section-title'>Distribuição de Benefícios (paginada)</div>", unsafe_allow_html=True)
 
-if "ben_dist_page" not in st.session_state: st.session_state["ben_dist_page"] = 1
+st.markdown("""
+<div class="note-box">
+Este gráfico mostra a quantidade de produtos por benefício (e a porcentagem relativa ao total da seleção). <br>
+Use os botões <b>Página Anterior</b> e <b>Próxima Página</b> para navegar e ajuste "Itens por página".
+</div>
+""", unsafe_allow_html=True)
 
-#  botões alinhados na mesma linha
-col_sel, col_prev, col_next, _ = st.columns([1.0, 0.6, 0.8, 6])
+if "ben_dist_page" not in st.session_state:
+    st.session_state["ben_dist_page"] = 1
+
+col_sel, col_prev, col_next = st.columns([1.2, 1, 1])
 with col_sel:
-    page_size = st.selectbox("Itens por página", options=[10, 15, 20, 25, 30], index=1, key="ben_page_size")
-with col_prev:
-    st.markdown('<div class="dist-nav">', unsafe_allow_html=True)
-    prev = st.button("Anterior", key="ben_prev")
-    st.markdown('</div>', unsafe_allow_html=True)
-with col_next:
-    st.markdown('<div class="dist-nav">', unsafe_allow_html=True)
-    next_ = st.button("Próxima", key="ben_next")
-    st.markdown('</div>', unsafe_allow_html=True)
+    page_size = st.selectbox("Itens por página", options=[1, 2, 4, 6, 8, 10], index=5, key="ben_page_size")
 
 if exp_brand.empty:
     st.info("Sem dados para exibir a distribuição.")
 else:
-    dist = (exp_brand.groupby("beneficio")["produto"].nunique().reset_index(name="qtd_produtos"))
-    dist = dist.sort_values(["qtd_produtos", "beneficio"], ascending=[False, True]).reset_index(drop=True)
+    dist = (
+        exp_brand.groupby("beneficio")["produto"]
+        .nunique()
+        .reset_index(name="qtd_produtos")
+        .sort_values(["qtd_produtos", "beneficio"], ascending=[False, True])
+        .reset_index(drop=True)
+    )
 
     total_pages = max(1, int(np.ceil(len(dist) / page_size)))
-    if prev: st.session_state["ben_dist_page"] = max(1, st.session_state["ben_dist_page"] - 1)
-    if next_: st.session_state["ben_dist_page"] = min(total_pages, st.session_state["ben_dist_page"] + 1)
+    st.session_state["ben_dist_page"] = min(st.session_state["ben_dist_page"], total_pages)
+
+    with col_prev:
+        st.markdown('<div class="dist-nav">', unsafe_allow_html=True)
+        st.button("Página Anterior", key="ben_prev",
+                  disabled=(st.session_state["ben_dist_page"] <= 1),
+                  on_click=lambda: st.session_state.update(ben_dist_page=max(1, st.session_state["ben_dist_page"] - 1)))
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col_next:
+        st.markdown('<div class="dist-nav" style="display:flex; justify-content:flex-end;">', unsafe_allow_html=True)
+        st.button("Próxima Página", key="ben_next",
+                  disabled=(st.session_state["ben_dist_page"] >= total_pages),
+                  on_click=lambda: st.session_state.update(ben_dist_page=min(total_pages, st.session_state["ben_dist_page"] + 1)))
+        st.markdown('</div>', unsafe_allow_html=True)
 
     start = (st.session_state["ben_dist_page"] - 1) * page_size
     end = start + page_size
@@ -378,7 +330,7 @@ else:
         customdata=np.array([[f"{100*p:.1f}%"] for p in page_df["pct"]])
     )
     fig.update_layout(
-        height=CHART_HEIGHT,
+        height=CHART_HEIGHT + 100,
         showlegend=False,
         bargap=0.12,
         xaxis_tickangle=-20,
@@ -392,8 +344,14 @@ else:
 
 st.markdown("---")
 
-# Top 3 benefícios da marca (todos os produtos)
-st.markdown(f"<div class='section-title'>Top 3 Benefícios da Marca (todos os produtos)</div>", unsafe_allow_html=True)
+#  Top 3 benefícios da marca 
+st.markdown(f"<div class='section-title'>3 Benefícios Mais Frequentes </div>", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="note-box">
+Mostra os três benefícios mais frequentes na marca selecionada.
+</div>
+""", unsafe_allow_html=True)
 
 df_brand_all = df[df["_source_file"] == sel_brand_value].copy() if uses_files else df[df["marca"] == sel_brand_label].copy()
 exp_brand_all = explode_benefits(df_brand_all)
@@ -402,41 +360,42 @@ if exp_brand_all.empty:
     st.info("Sem dados para calcular o Top 3.")
     TOP3 = []
 else:
-    top3 = (exp_brand_all.groupby("beneficio")["produto"]
-            .nunique().sort_values(ascending=False).head(3).reset_index(name="produtos"))
+    top3 = (
+        exp_brand_all.groupby("beneficio")["produto"]
+        .nunique()
+        .sort_values(ascending=False)
+        .head(3)
+        .reset_index(name="produtos")
+    )
     TOP3 = top3["beneficio"].tolist()
-    total_prod = df_brand_all["nome"].nunique()
-    top3["pct"] = top3["produtos"] / float(max(total_prod, 1))
 
-    chart_choice = st.radio("Visualização", options=["Barras", "Rosca (%)"], horizontal=True, index=0)
-    if chart_choice == "Barras":
-        fig_top = px.bar(
-            top3, x="beneficio", y="produtos", text="produtos",
-            color="beneficio", color_discrete_sequence=SEQ,
-            labels={"beneficio": "Benefício", "produtos": "Produtos"}
-        )
-        fig_top.update_traces(textposition="outside", textfont=dict(size=BAR_TEXT_SIZE))
-        fig_top.update_layout(
-            height=CHART_HEIGHT//1.2, showlegend=False, bargap=0.12,
-            xaxis_tickangle=-20,
-            xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
-            yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
-            hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
-            margin=dict(t=40, b=120, l=30, r=20)
-        )
-    else:
-        fig_top = px.pie(
-            top3, names="beneficio", values="pct",
-            hole=0.45, color="beneficio", color_discrete_sequence=SEQ
-        )
-        fig_top.update_traces(texttemplate="%{label}<br>%{percent:.1%}", textfont_size=PIE_TEXT_SIZE)
-        fig_top.update_layout(height=CHART_HEIGHT//1.2, legend=dict(font=dict(size=LEGEND_FONT_SIZE)))
+    fig_top = px.bar(
+        top3, x="beneficio", y="produtos", text="produtos",
+        color="beneficio", color_discrete_sequence=SEQ,
+        labels={"beneficio": "Benefício", "produtos": "Produtos"}
+    )
+    fig_top.update_traces(textposition="outside", textfont=dict(size=BAR_TEXT_SIZE))
+    fig_top.update_layout(
+        height=int(CHART_HEIGHT * 0.9) + 80,
+        showlegend=False, bargap=0.12,
+        xaxis_tickangle=-20,
+        xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+        yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
+        hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE),
+        margin=dict(t=40, b=120, l=30, r=20)
+    )
     st.plotly_chart(fig_top, width="stretch")
 
 st.markdown("---")
 
-# Comparação de benefícios entre marcas (Top 3)
+#  Comparação entre marcas (Top 3) 
 st.markdown(f"<div class='section-title'>Comparação de Benefícios entre Marcas (Top 3)</div>", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="note-box">
+Compara as marcas selecionadas usando os 3 benefícios mais frequentes da marca central (escolhida no filtro).
+</div>
+""", unsafe_allow_html=True)
 
 brand_opts = ["(todas)"] + BRAND_LABELS
 sel_brands = st.multiselect("Marcas", options=brand_opts, default=[sel_brand_label], key="ben_comp_brands")
@@ -456,36 +415,34 @@ if sel_brands:
         if ben_focus:
             exp_ = exp_[exp_["beneficio"].isin(ben_focus)]
         if exp_.empty:
-            local_top = (explode_benefits(base).groupby("beneficio")["produto"]
-                         .nunique().sort_values(ascending=False).head(3).index.tolist())
+            local_top = (
+                explode_benefits(base)
+                .groupby("beneficio")["produto"]
+                .nunique()
+                .sort_values(ascending=False)
+                .head(3)
+                .index
+                .tolist()
+            )
             exp_ = explode_benefits(base)
             exp_ = exp_[exp_["beneficio"].isin(local_top)]
-        grp = (exp_.groupby("beneficio")["produto"].nunique().reset_index(name="produtos"))
+        grp = exp_.groupby("beneficio")["produto"].nunique().reset_index(name="produtos")
         grp["marca_label"] = lab
         dfs_comp.append(grp)
+
     comp_df = pd.concat(dfs_comp, ignore_index=True) if dfs_comp else pd.DataFrame()
 
     if comp_df.empty:
         st.info("Sem dados para comparar.")
     else:
-        orient = st.radio("Orientação do gráfico", options=["Barras verticais", "Barras horizontais"], horizontal=True, key="ben_orient")
-        if orient == "Barras verticais":
-            fig_cmp = px.bar(
-                comp_df, x="beneficio", y="produtos",
-                color="marca_label", barmode="group",
-                color_discrete_sequence=SEQ,
-                labels={"beneficio": "Benefício", "produtos": "Produtos", "marca_label": "Marca"}
-            )
-        else:
-            fig_cmp = px.bar(
-                comp_df, x="produtos", y="beneficio",
-                color="marca_label", barmode="group", orientation="h",
-                color_discrete_sequence=SEQ,
-                labels={"beneficio": "Benefício", "produtos": "Produtos", "marca_label": "Marca"}
-            )
-
+        fig_cmp = px.bar(
+            comp_df, x="beneficio", y="produtos",
+            color="marca_label", barmode="group",
+            color_discrete_sequence=SEQ,
+            labels={"beneficio": "Benefício", "produtos": "Produtos", "marca_label": "Marca"}
+        )
         fig_cmp.update_layout(
-            height=CHART_HEIGHT,
+            height=CHART_HEIGHT + 100,
             bargap=0.12,
             legend=dict(font=dict(size=LEGEND_FONT_SIZE)),
             xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
@@ -500,15 +457,16 @@ else:
 
 st.markdown("---")
 
-# Encontrar produtos por benefícios 
+# Encontre produtos por benefícios 
 st.markdown(f"<div class='section-title'>Encontre produtos por benefícios</div>", unsafe_allow_html=True)
 st.markdown("""
 <div class="note-box">
-<b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais benefícios e, opcionalmente, uma categoria.<br>
-Os produtos são organizados em grupos para facilitar a busca:<br>
-<b>APENAS: [benefício]</b> — produto com SOMENTE aquele benefício.<br>
-<b>EXATAMENTE: [b1 + b2 + ...]</b> — exatamente a combinação selecionada, sem extras.<br>
-<b>CONTÉM: [benefício]</b> — contém o benefício, mas também outros.
+    <b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais tipos de pele e, opcionalmente, uma categoria.<br>
+    Os produtos são organizados em grupos para facilitar a busca:<br>
+    <b>CATEGORIA: Todos os tipos</b> - Produtos marcados pelo fabricante como adequados para "todos os tipos de pele".<br>
+    <b>APENAS: [tipo]</b> - Produtos que atendem SOMENTE aquele tipo específico (ex: apenas para pele seca).<br>
+    <b>EXATAMENTE: [tipo] + [tipo]</b> - Produtos que atendem exatamente a combinação selecionada, sem tipos extras.<br>
+    <b>CONTÉM: [tipo]</b> - Produtos que contêm aquele tipo mas também atendem outros tipos de pele.
 </div>
 """, unsafe_allow_html=True)
 
@@ -587,13 +545,19 @@ else:
             for b in sel_benefits:
                 bucket_order.append(f"CONTÉM: {b}")
 
-            # Tabelas por marca
+            #  Tabelas por marca 
+            headers_map = {
+                "Produto":"Produto", "Categoria":"Categoria", "Quantidade":"Quantidade",
+                "Preço":"Preço", "Benefícios":"Benefícios", "Ingredientes":"Ingredientes"
+            }
+
             for marca in sel_brands_search:
                 sub = by_prod_exploded[by_prod_exploded["marca"] == marca]
                 if sub.empty:
                     continue
 
-                st.markdown(f"<div class='brand-header'>{marca}</div>", unsafe_allow_html=True)
+                # Cabeçalho da marca no mesmo estilo
+                st.markdown(f"<div class='brand-caption'>{marca}</div>", unsafe_allow_html=True)
 
                 for bucket in bucket_order:
                     tb = sub[sub["bucket"] == bucket].copy()
@@ -612,17 +576,26 @@ else:
                         "ingredientes": "Ingredientes"
                     }).fillna("—").drop_duplicates()
 
-                    st.dataframe(display_tb, width="stretch", hide_index=True)
+                    # Render HTML table 
+                    thead = "".join([f"<th>{headers_map.get(c, c)}</th>" for c in display_tb.columns])
+                    rows_html = []
+                    for _, r in display_tb.iterrows():
+                        cells = []
+                        for c in display_tb.columns:
+                            v = r[c]
+                            cells.append(f"<td>{v}</td>")
+                        rows_html.append("<tr>" + "".join(cells) + "</tr>")
+                    html_table = f"<table class='details-table'><thead><tr>{thead}</tr></thead><tbody>{''.join(rows_html)}</tbody></table>"
+                    st.markdown(html_table, unsafe_allow_html=True)
 
-            # Gráfico após as tabelas
+            # Gráfico resumo após as tabelas
             st.markdown("---")
             st.markdown("### Visualizações resumidas da sua seleção")
             st.markdown("""
-<div class="note-box">
-<b>O que você vê aqui?</b><br>
-• <b>Por marca × bucket</b>: quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).
-</div>
-""", unsafe_allow_html=True)
+                <div class="note-box">
+                <b>Por marca × bucket:</b> quantidade de produtos por grupo.
+                </div>
+            """, unsafe_allow_html=True)
 
             agg_bucket = (
                 by_prod_exploded
@@ -633,11 +606,8 @@ else:
             agg_bucket["bucket"] = pd.Categorical(agg_bucket["bucket"], categories=bucket_order, ordered=True)
             agg_bucket = agg_bucket.sort_values(["bucket","marca"])
 
-            bar_mode = st.radio("Modo", ["Empilhado", "Agrupado"], horizontal=True, key="g_sum_mode_ben")
-            barmode = "stack" if bar_mode == "Empilhado" else "group"
-
             fig_sum = px.bar(
-                agg_bucket, x="marca", y="produtos", color="bucket", barmode=barmode,
+                agg_bucket, x="marca", y="produtos", color="bucket", barmode="group",
                 color_discrete_sequence=SEQ,
                 labels={"marca":"Marca", "produtos":"Nº de produtos", "bucket":"Grupo"},
             )
@@ -649,7 +619,6 @@ else:
                 margin=dict(t=40, b=80, l=20, r=260),
                 legend=dict(font=dict(size=LEGEND_FONT_SIZE), itemwidth=90),
                 xaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
-                yaxis=dict(title_font=dict(size=AXIS_TITLE_SIZE), tickfont=dict(size=AXIS_TICK_SIZE)),
                 hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE)
             )
             st.plotly_chart(fig_sum, width="stretch")
