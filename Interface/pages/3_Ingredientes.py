@@ -197,7 +197,7 @@ st.markdown(f"<div class='subtle' style='margin:.5rem 0 .75rem 0;'>{TAGLINE_TEXT
 # Nota geral fixa
 st.markdown("""
 <div class="note-box">
-<b>Como usar:</b> Escolha uma marca e, opcionalmente, uma categoria. O ingrediente mais usado considera <i>todos</i> os produtos da marca.
+Escolha uma marca e, opcionalmente, uma categoria. O ingrediente mais usado considera <i>todos</i> os produtos da marca.
 O ingrediente exclusivo compara com as demais marcas do dataset.
 </div>
 """, unsafe_allow_html=True)
@@ -464,7 +464,7 @@ st.markdown("---")
 st.markdown(f"<div class='section-title'>Encontre produtos por ingredientes</div>", unsafe_allow_html=True)
 st.markdown("""
 <div class="note-box">
-    <b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais <i>ingredientes</i> e, opcionalmente, uma categoria.<br>
+    Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais <i>ingredientes</i> e, opcionalmente, uma categoria.<br>
     Os produtos são organizados em grupos para facilitar a busca:<br>
     <b>APENAS: [ingrediente]</b> - Produtos que listam SOMENTE aquele ingrediente dentre os selecionados.<br>
     <b>EXATAMENTE: [ing] + [ing]</b> - Produtos que contêm exatamente a combinação selecionada (somente os escolhidos).<br>

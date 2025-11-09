@@ -4,7 +4,7 @@ from include import *
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
 
-st.set_page_config(page_title="Skincare • Preço & Quantidade", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Preço", page_icon="", layout="wide")
 apply_base_theme()
 apply_palette_css(st.session_state["palette_name"])
 SEQ = color_sequence(st.session_state["palette_name"]) or ["#6e56cf", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f7"]
@@ -137,7 +137,7 @@ def load_brand_csvs(data_dir: Path = DATA_DIR) -> pd.DataFrame:
     for c in ["nome","marca","categoria","tipo_pele","beneficios","ingredientes"]:
         full[c] = full[c].astype(str).str.strip()
 
-    # --------- PARSE DE PREÇO (correto para pt-BR e “limpo”) ----------
+    # --------- PARSE DE PREÇO (correto para pt-BR e "limpo") ----------
     money_re = re.compile(r"(\d{1,3}(?:\.\d{3})*|\d+)(?:,(\d{1,2}))?$")  # 1.234,56 | 84,00 | 129
     def parse_money_to_float(x) -> Optional[float]:
         if x is None or (isinstance(x, float) and pd.isna(x)): 
@@ -230,50 +230,199 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.markdown(
     "<div class='simple-note'>"
-    "<b>Nota:</b> Este painel consolida dados coletados nos sites oficiais das marcas brasileiras analisadas."
+    "Este painel consolida dados coletados nos sites oficiais das marcas brasileiras analisadas."
     "<br>Selecione <b>uma marca</b> e, opcionalmente, <b>uma categoria</b> para filtrar os resultados."
     "<br>Com esses filtros, você verá os <b>KPIs</b>: total de produtos da seleção, <b>marca</b>, <b>preço médio</b>, <b>mínimo</b> e <b>máximo</b>."
-    "<br>Também exibimos os <b>Top 3 produtos mais caros</b> e os <b>Top 3 mais baratos</b> com base nos filtros aplicados."
+    "<br>Também exibimos os <b> 3 produtos mais caros</b> e os <b> 3 mais baratos</b> com base nos filtros aplicados."
     "</div>",
     unsafe_allow_html=True
 )
 
-# ESTILOS EXTRAS
+# ESTILOS EXTRAS - CARDS CORRIGIDOS
 st.markdown(f"""
 <style>
-.cardgrid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }}
+/* Grid padronizado com colunas iguais */
+.cardgrid {{ 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); 
+  gap: 20px; 
+  margin-bottom: 20px;
+}}
+
+/* Card com altura mínima e layout flexível */
 .card {{
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
-  border-radius: 22px; padding: 26px 30px;
+  border-radius: 22px; 
+  padding: 24px 28px;
   border: 2px solid {accent(0)}40;
   box-shadow: 0 4px 12px rgba(0,0,0,.06);
-  display: grid; grid-template-columns: 1fr auto; align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
+  height: 100%;
 }}
-.card .left .title {{ font-size: 24px; font-weight: 700; color: {text_color()}; margin: 0; line-height: 1.35; }}
-.card .left .subtitle {{ font-size: 18px; color: {subtext_color()}; margin-top: 10px; font-weight: 500; }}
-.badge {{ display:inline-block; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 700; color: #fff; margin-left: 12px; }}
-.badge.caro    {{ background: linear-gradient(135deg, {accent(3)} 0%, {SEQ[(3+1) % len(SEQ)]} 100%); }}
-.badge.barato  {{ background: linear-gradient(135deg, {accent(1)} 0%, {SEQ[(1+1) % len(SEQ)]} 100%); }}
-.price {{ font-size: 32px; color: {accent(0)}; font-weight: 800; text-align: right; }}
 
-.kpi-box {{ border:4px solid {accent(0)}; border-radius:22px; padding:26px; background: linear-gradient(135deg, #ffffff 0%, {accent(0)}10 100%); text-align:center; height:170px; display:flex; flex-direction:column; justify-content:center; box-shadow: 0 4px 12px rgba(0,0,0,.06); }}
-.kpi-title {{ font-size:22px; font-weight:700; color:{subtext_color()}; }}
-.kpi-value {{ font-size:40px; font-weight:800; color:{accent(0)}; margin-top:.5rem; }}
+/* Conteúdo do card */
+.card .content {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}}
 
-.sectioncap {{ font-size: 20px; font-weight: 700; color:{text_color()}; margin:.75rem 0 1rem; }}
+.card .left {{ 
+  flex: 1;
+  min-width: 0;
+}}
 
-.details-table {{ width: 100%; border-collapse: collapse; margin-top: 1.2rem; background: {panel_bg()}; border-radius: 18px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }}
-.details-table thead {{ background: linear-gradient(135deg, {accent(0)} 0%, {accent(1)} 100%); color: white; }}
-.details-table th {{ padding: 18px 20px; text-align: left; font-weight: 700; font-size: 18px; border-bottom: 3px solid rgba(255,255,255,.2); }}
-.details-table td {{ padding: 16px 20px; font-size: 17px; color: {text_color()}; border-bottom: 1px solid #f0f0f5; }}
-.details-table tbody tr:hover {{ background: linear-gradient(90deg, {accent(0)}0D 0%, transparent 100%); }}
-.details-table tbody tr:last-child td {{ border-bottom: none; }}
+.card .left .title {{ 
+  font-size: 22px; 
+  font-weight: 700; 
+  color: {text_color()}; 
+  margin: 0; 
+  line-height: 1.4;
+  word-wrap: break-word;
+}}
 
-.brand-caption {{ margin-top:18px; margin-bottom:6px; font-weight:900; font-size:22px; color:#fff; padding:8px 14px; border-radius:14px; background: linear-gradient(90deg, {accent(4)} 0%, {accent(2)} 100%); }}
+/* CATEGORIA E QUANTIDADE MAIORES */
+.card .left .subtitle {{ 
+  font-size: 20px; 
+  color: {subtext_color()}; 
+  margin-top: 12px; 
+  font-weight: 600;
+  line-height: 1.3;
+}}
 
-.radio-container {{ background: {panel_bg()}; padding: 18px 24px; border-radius: 18px; border: 2px solid {accent(0)}33; margin: 1rem 0; }}
-.radio-container label {{ font-size: 20px !important; font-weight: 700 !important; color: {text_color()} !important; }}
-.stRadio > div[role='radiogroup'] > label p {{ font-size: 20px !important; }}
+.badge {{ 
+  display: inline-block; 
+  padding: 6px 14px; 
+  border-radius: 999px; 
+  font-size: 13px; 
+  font-weight: 700; 
+  color: #fff; 
+  margin-top: 8px;
+  white-space: nowrap;
+}}
+
+.badge.caro {{ 
+  background: linear-gradient(135deg, {accent(3)} 0%, {SEQ[(3+1) % len(SEQ)]} 100%); 
+}}
+
+.badge.barato {{ 
+  background: linear-gradient(135deg, {accent(1)} 0%, {SEQ[(1+1) % len(SEQ)]} 100%); 
+}}
+
+/* PREÇO MAIOR E MAIS DESTACADO */
+.price {{ 
+  font-size: 38px; 
+  color: {accent(0)}; 
+  font-weight: 900; 
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+}}
+
+.kpi-box {{ 
+  border: 4px solid {accent(0)}; 
+  border-radius: 22px; 
+  padding: 26px; 
+  background: linear-gradient(135deg, #ffffff 0%, {accent(0)}10 100%); 
+  text-align: center; 
+  height: 170px; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  box-shadow: 0 4px 12px rgba(0,0,0,.06); 
+}}
+
+.kpi-title {{ 
+  font-size: 22px; 
+  font-weight: 700; 
+  color: {subtext_color()}; 
+}}
+
+.kpi-value {{ 
+  font-size: 40px; 
+  font-weight: 800; 
+  color: {accent(0)}; 
+  margin-top: .5rem; 
+}}
+
+.sectioncap {{ 
+  font-size: 20px; 
+  font-weight: 700; 
+  color: {text_color()}; 
+  margin: .75rem 0 1rem; 
+}}
+
+.details-table {{ 
+  width: 100%; 
+  border-collapse: collapse; 
+  margin-top: 1.2rem; 
+  background: {panel_bg()}; 
+  border-radius: 18px; 
+  overflow: hidden; 
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); 
+}}
+
+.details-table thead {{ 
+  background: linear-gradient(135deg, {accent(0)} 0%, {accent(1)} 100%); 
+  color: white; 
+}}
+
+.details-table th {{ 
+  padding: 18px 20px; 
+  text-align: left; 
+  font-weight: 700; 
+  font-size: 18px; 
+  border-bottom: 3px solid rgba(255,255,255,.2); 
+}}
+
+.details-table td {{ 
+  padding: 16px 20px; 
+  font-size: 17px; 
+  color: {text_color()}; 
+  border-bottom: 1px solid #f0f0f5; 
+}}
+
+.details-table tbody tr:hover {{ 
+  background: linear-gradient(90deg, {accent(0)}0D 0%, transparent 100%); 
+}}
+
+.details-table tbody tr:last-child td {{ 
+  border-bottom: none; 
+}}
+
+.brand-caption {{ 
+  margin-top: 18px; 
+  margin-bottom: 6px; 
+  font-weight: 900; 
+  font-size: 22px; 
+  color: #fff; 
+  padding: 8px 14px; 
+  border-radius: 14px; 
+  background: linear-gradient(90deg, {accent(4)} 0%, {accent(2)} 100%); 
+}}
+
+.radio-container {{ 
+  background: {panel_bg()}; 
+  padding: 18px 24px; 
+  border-radius: 18px; 
+  border: 2px solid {accent(0)}33; 
+  margin: 1rem 0; 
+}}
+
+.radio-container label {{ 
+  font-size: 20px !important; 
+  font-weight: 700 !important; 
+  color: {text_color()} !important; 
+}}
+
+.stRadio > div[role='radiogroup'] > label p {{ 
+  font-size: 20px !important; 
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -311,7 +460,7 @@ with k2: kpi_box("Preço médio", brl(preco_med), 1)
 with k3: kpi_box("Preço mínimo", brl(preco_min), 2)
 with k4: kpi_box("Preço máximo", brl(preco_max), 3)
 
-# CARDS: TOP 3 CAROS/BARATOS
+# CARDS: TOP 3 CAROS/BARATOS - FUNÇÃO CORRIGIDA
 st.markdown(f"<div style='font-size:32px; font-weight:800; color:{accent(1)}; margin:2rem 0 1rem 0;'>Produtos mais caros e mais baratos</div>", unsafe_allow_html=True)
 
 def _fmt_qtd(v,u):
@@ -332,11 +481,12 @@ def _render_card(prod, tipo):
     badge_text  = "Mais caro" if tipo=="Mais caro" else "Mais barato"
     return f"""
       <div class="card">
-        <div class="left">
-          <p class="title">{nome} <span class="badge {badge_class}">{badge_text}</span></p>
-          <p class="subtitle">{cat} • {qtd}</p>
-        </div>
-        <div>
+        <div class="content">
+          <div class="left">
+            <p class="title">{nome}</p>
+            <p class="subtitle">{cat} • {qtd}</p>
+            <span class="badge {badge_class}">{badge_text}</span>
+          </div>
           <div class="price">{preco}</div>
         </div>
       </div>
@@ -434,12 +584,10 @@ else:
         pairs = df_sc_base.apply(lambda r: _extract_num_and_unit_from_split(r.get("quantidade_valor"), r.get("quantidade_unidade")), axis=1)
     df_sc_base[["q_num_raw","q_unit_norm"]] = pd.DataFrame(pairs.tolist(), index=df_sc_base.index)
 
-    # preço já vem parseado corretamente de df_all
     df_sc_base["categoria"] = df_sc_base["categoria"].astype(str).str.strip()
     df_sc_base["q_g_calc"]  = df_sc_base.apply(lambda r: _to_g(r["q_num_raw"],  r["q_unit_norm"], r["categoria"]), axis=1)
     df_sc_base["q_ml_calc"] = df_sc_base.apply(lambda r: _to_ml(r["q_num_raw"], r["q_unit_norm"], r["categoria"]), axis=1)
 
-    # unidade com “Original”
     cpx1, _cpx2 = st.columns([1,1])
     with cpx1:
         unidade_plot = st.radio("Unidade para visualização", ["g", "mL", "Original"], horizontal=True, key="unid_pxq_fix_csv")
@@ -485,9 +633,7 @@ else:
             customdata=customdata_sc,
             hovertemplate="<b>%{customdata[0]}</b><br>Preço: %{customdata[1]}<br>Qtd (origem): %{customdata[2]}<br>Qtd (plot): %{customdata[3]}<br>Categoria: %{customdata[4]}<extra></extra>"
         )
-        # preço fixo 0–150
         fig_sc.update_yaxes(range=[0, 150])
-        # ticks da quantidade
         fig_sc.update_xaxes(tickvals=[5,10,15,20,25,30,40,50,200])
 
         fig_sc.update_layout(
@@ -521,7 +667,7 @@ def agg_min_med_max(df: pd.DataFrame, by: List[str]) -> pd.DataFrame:
 
 #  tabela com subtítulo por marca 
 def render_details_table_products_grouped_by_brand(df: pd.DataFrame, extra_cols: List[str], brand_col: str = BRAND_COL):
-    base_cols = ["nome","categoria","preco"]  # marca vira título do bloco
+    base_cols = ["nome","categoria","preco"]
     all_cols = [c for c in (base_cols + extra_cols) if c in df.columns]
     for brand, sub in df.sort_values([brand_col, "categoria","nome"]).groupby(brand_col):
         st.markdown(f"<div class='brand-caption'>{brand}</div>", unsafe_allow_html=True)
@@ -602,7 +748,6 @@ if analysis_mode == "Fixar uma marca":
         agg_page, _s, _e = paginate(agg_df, key_base=f"fix_brand_{facet_A}", page_size=page_size_A)
 
         figA = go.Figure()
-        # barra (médio) + losangos (min/max) — cores bem distintas
         figA.add_bar(
             name="Preço médio", x=agg_page[dim_col], y=agg_page["preco_med"],
             marker_color=accent(0),
@@ -620,7 +765,7 @@ if analysis_mode == "Fixar uma marca":
             hovertemplate="<b>%{x}</b><br>Máximo: R$ %{y:.2f}<extra></extra>"
         )
         figA.update_layout(xaxis_title=facet_A, yaxis_title="Preço (R$)")
-        figA.update_yaxes(range=[0,150])  # preço fixo 0–150
+        figA.update_yaxes(range=[0,150])
         style_axes(figA, height=CHART_HEIGHT)
         figA.update_xaxes(tickangle=30)
         st.plotly_chart(figA, use_container_width=True, config={'displayModeBar': False})
@@ -641,13 +786,11 @@ if analysis_mode == "Fixar uma marca":
             unsafe_allow_html=True
         )
 
-
         st.markdown(f"<div class='sectioncap'>Ver detalhes — {brand_A} por {facet_A.lower()}</div>", unsafe_allow_html=True)
         extra = st.multiselect("Colunas extras para ver nos detalhes", options=["ingredientes","beneficios","tipo_pele"], default=[], key=f"extra_cols_fix_{facet_A}")
         tmp = details_df.copy(); tmp[BRAND_COL] = brand_A
         render_details_table_products_grouped_by_brand(tmp, extra_cols=extra, brand_col=BRAND_COL)
 
-# ---------- Fluxo B: comparar marcas ----------
 else:
     col_b1, col_b2, col_b3 = st.columns([1.2, 1, 0.8])
     with col_b1:
@@ -707,7 +850,7 @@ else:
             hovertemplate="<b>%{x}</b><br>Máximo: R$ %{y:.2f}<extra></extra>"
         )
         figB.update_layout(xaxis_title="Marca", yaxis_title="Preço (R$)")
-        figB.update_yaxes(range=[0,150])  # preço fixo 0–150
+        figB.update_yaxes(range=[0,150])
         style_axes(figB, height=CHART_HEIGHT)
         figB.update_xaxes(tickangle=30)
         st.plotly_chart(figB, use_container_width=True, config={'displayModeBar': False})

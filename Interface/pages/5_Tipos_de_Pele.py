@@ -31,7 +31,7 @@ TOOLTIP_FONT_SIZE = 22
 BARGAP = 0.18
 BARGROUPGAP = 0.08
 
-
+# ===================== CSS (padronizado com a tela de Preço & Quantidade) =====================
 st.markdown(f"""
 <style>
 .page-sub {{ 
@@ -58,113 +58,55 @@ st.markdown(f"""
     margin: 16px 0 8px 0;
 }}
 
-/* RADIO PILLS PARA MÉTRICA — SEM MOLDURAS COLORIDAS */
+/* RADIO PILLS */
 .stRadio > div[role="radiogroup"] {{
-    display: flex;
-    gap: 12px;
-    padding: 0;
-    border: none;
-    background: transparent;
+    display: flex; gap: 12px; padding: 0; border: none; background: transparent;
 }}
 .stRadio > div[role="radiogroup"] > label {{
-    background: #fff;
-    border: 1px solid {neutral_border()};
-    border-radius: 9999px;
-    padding: 8px 16px;
-    margin: 0 !important;
-    font-weight: 700;
-    font-size: 18px !important;
-    color: {text_color()} !important;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    background: #fff; border: 1px solid {neutral_border()};
+    border-radius: 9999px; padding: 8px 16px; margin: 0 !important;
+    font-weight: 700; font-size: 18px !important; color: {text_color()} !important;
+    cursor: pointer; transition: all 0.2s ease;
 }}
-.stRadio > div[role="radiogroup"] > label:hover {{
-    border-color: {neutral_border()};
-    background: #fafafa;
-}}
-.stRadio > div[role="radiogroup"] > label > div:first-child {{
-    display: none !important;   /* esconde a bolinha */
-}}
+.stRadio > div[role="radiogroup"] > label:hover {{ border-color: {neutral_border()}; background: #fafafa; }}
+.stRadio > div[role="radiogroup"] > label > div:first-child {{ display: none !important; }}  /* esconde bolinha */
 .stRadio > div[role="radiogroup"] > label[aria-checked="true"] {{
-    background: {accent(0)} !important;
-    color: #fff !important;
-    border-color: {accent(0)} !important;
+    background: {accent(0)} !important; color: #fff !important; border-color: {accent(0)} !important;
 }}
 
-/* CABEÇALHO DA MARCA (tabelas) */
-.brand-header {{
-    background: linear-gradient(135deg, {accent(0)} 0%, {accent2()} 100%);
-    color: white;
-    padding: 18px 24px;
-    border-radius: 14px;
-    font-size: 28px;
-    font-weight: 900;
-    margin: 32px 0 16px 0;
-    box-shadow: 0 4px 12px {accent(0)}40;
+/* ======== PADRÃO DA TABELA (igual à tela Preço & Quantidade) ======== */
+.details-table {{
+  width: 100%; border-collapse: collapse; margin-top: 1.2rem;
+  background: {panel_bg()}; border-radius: 18px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}}
+.details-table thead {{
+  background: linear-gradient(135deg, {accent(0)} 0%, {accent(1)} 100%);
+  color: white;
+}}
+.details-table th {{
+  padding: 18px 20px; text-align: left; font-weight: 700; font-size: 18px;
+  border-bottom: 3px solid rgba(255,255,255,.2);
+}}
+.details-table td {{
+  padding: 16px 20px; font-size: 17px; color: {text_color()};
+  border-bottom: 1px solid #f0f0f5;
+}}
+.details-table tbody tr:hover {{ background: linear-gradient(90deg, {accent(0)}0D 0%, transparent 100%); }}
+.details-table tbody tr:last-child td {{ border-bottom: none; }}
+
+/* Título por marca (igual ao Preço & Quantidade) */
+.brand-caption {{
+  margin-top:18px; margin-bottom:6px; font-weight:900; font-size:22px; color:#fff;
+  padding:8px 14px; border-radius:14px;
+  background: linear-gradient(90deg, {accent(4)} 0%, {accent(2)} 100%);
 }}
 
-/* SUBTÍTULO DO BUCKET */
-.bucket-title {{
-    background: {accent(0)}15;
-    color: {accent(0)};
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 20px;
-    font-weight: 800;
-    margin: 16px 0 12px 0;
-    border-left: 5px solid {accent(0)};
-}}
-
-/* DATAFRAME: FONTES MAIORES + QUEBRA DE LINHA + ROLAGEM ÚNICA */
-div[data-testid="stDataFrame"] {{
-    border: 3px solid {accent(0)} !important;
-    border-radius: 14px !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-}}
-
-div[data-testid="stDataFrame"] table {{
-    font-size: 28px !important;
-    line-height: 1.6 !important;
-}}
-
-div[data-testid="stDataFrame"] thead th {{
-    font-size: 30px !important;
-    font-weight: 800 !important;
-    padding: 14px 18px !important;
-    background-color: {accent(0)}15 !important;
-    color: {text_color()} !important;
-    white-space: nowrap !important;
-}}
-
-div[data-testid="stDataFrame"] tbody td {{
-    padding: 16px 18px !important;
-    font-size: 20px !important;
-    white-space: normal !important;
-    word-wrap: break-word !important;
-    word-break: break-word !important;
-    overflow-wrap: anywhere !important;
-    vertical-align: top !important;
-    min-height: 60px !important;
-    height: auto !important;
-}}
-
-div[data-testid="stDataFrame"] tbody tr {{
-    height: auto !important;
-}}
-
-div[data-testid="stDataFrame"] td > div {{
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    max-height: none !important;
-    height: auto !important;
-    padding: 8px 0 !important;
-}}
-
-/* Remove barra de rolagem interna duplicada */
-div[data-testid="stDataFrame"] > div {{
-    overflow: visible !important;
+/* Subtítulo do bucket (discreto) */
+.bucket-caption {{
+  display:inline-block; margin:10px 0 6px; padding:8px 12px; border-radius:10px;
+  background: {accent(0)}15; color:{accent(0)}; font-weight:800; font-size:16px;
+  border-left:4px solid {accent(0)};
 }}
 
 /* BOTÕES DE PAGINAÇÃO */
@@ -176,6 +118,8 @@ div[data-testid="stDataFrame"] > div {{
 }}
 </style>
 """, unsafe_allow_html=True)
+# ==============================================================================================
+
 
 #  HELPERS 
 def split_semicolon(s: str) -> list[str]:
@@ -222,16 +166,10 @@ def style_axes(fig, height: int = CHART_H):
         paper_bgcolor=panel_bg(),
         plot_bgcolor=panel_bg(),
         title=None,
-        margin=dict(t=60, b=70, l=20, r=260),  # espaço p ara legenda à direita
+        margin=dict(t=60, b=70, l=20, r=260),  # espaço p/ legenda à direita
         hoverlabel=dict(font_size=TOOLTIP_FONT_SIZE, font_color="black", bgcolor="white"),
-        legend=dict(
-            font=dict(size=LEGEND_FONT_SIZE),
-            x=1.02, y=1, xanchor="left", yanchor="top"
-        ),
-        legend_title=dict(
-            text="Marca",
-            font=dict(size=LEGEND_TITLE_SIZE) 
-        ),
+        legend=dict(font=dict(size=LEGEND_FONT_SIZE), x=1.02, y=1, xanchor="left", yanchor="top"),
+        legend_title=dict(text="Marca", font=dict(size=LEGEND_TITLE_SIZE)),
         annotations=[]
     )
     return fig
@@ -259,6 +197,55 @@ def fmt_qtd(v, u):
         v_str = str(v)
     return f"{v_str} {u}" if pd.notna(u) and str(u).strip() else v_str
 
+# ---------- RENDER DA TABELA (igual ao Preço & Quantidade) ----------
+# ---------- RENDER DA TABELA (igual ao Preço & Quantidade) ----------
+def render_details_table(df: pd.DataFrame):
+    """
+    Aceita tanto colunas originais (nome, categoria, beneficios, ingredientes)
+    quanto as já renomeadas (Produto, Categoria, Benefícios, Ingredientes).
+    Garante as colunas obrigatórias e renderiza a tabela .details-table.
+    """
+    # 1) Normaliza nomes, se vierem no formato original
+    col_aliases = {
+        "nome": "Produto",
+        "categoria": "Categoria",
+        "beneficios": "Benefícios",
+        "ingredientes": "Ingredientes",
+    }
+    if any(c in df.columns for c in col_aliases.keys()):
+        df = df.rename(columns={k: v for k, v in col_aliases.items() if k in df.columns})
+
+    # 2) Garante que todas as colunas existam
+    required = ["Produto", "Categoria", "Quantidade", "Preço", "Benefícios", "Ingredientes"]
+    for c in required:
+        if c not in df.columns:
+            df[c] = "—"
+
+    # 3) Seleciona na ordem certa
+    df = df[required].fillna("—")
+
+    # 4) Render HTML padronizado
+    headers_map = {
+        "Produto": "Produto",
+        "Categoria": "Categoria",
+        "Quantidade": "Quantidade",
+        "Preço": "Preço",
+        "Benefícios": "Benefícios",
+        "Ingredientes": "Ingredientes",
+    }
+    thead = "".join([f"<th>{headers_map.get(c, c)}</th>" for c in required])
+
+    rows_html = []
+    for _, r in df.iterrows():
+        cells = []
+        for c in required:
+            v = r[c]
+            cells.append(f"<td>{v}</td>")
+        rows_html.append("<tr>" + "".join(cells) + "</tr>")
+
+    html = f"<table class='details-table'><thead><tr>{thead}</tr></thead><tbody>{''.join(rows_html)}</tbody></table>"
+    st.markdown(html, unsafe_allow_html=True)
+
 #  DADOS 
 df = load_data()
 
@@ -270,7 +257,7 @@ st.markdown(f"<div class='page-sub'>{TAGLINE_TEXT}</div>", unsafe_allow_html=Tru
 st.markdown("### Todos os tipos de pele por marca")
 st.markdown("""
 <div class='mode-description'>
-    <b>Neste modo:</b> Este gráfico mostra a distribuição de todos os produtos por tipo de pele para todas as marcas. <br>
+    Este gráfico mostra a distribuição de todos os produtos por tipo de pele para todas as marcas. <br>
     Use a opção <b>Métrica</b> para alternar entre contagem absoluta dos produtos ou participação percentual (%). <br>
     Use os botões <b>Anterior/Próximo</b> para navegar em mais páginas se o gráfico ficar muito extenso.
 </div>
@@ -352,7 +339,7 @@ st.markdown("---")
 st.markdown("### Encontre produtos por tipo de pele")
 st.markdown("""
 <div class='mode-description'>
-    <b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais tipos de pele e, opcionalmente, uma categoria.<br>
+    Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais tipos de pele e, opcionalmente, uma categoria.<br>
     Os produtos são organizados em grupos para facilitar a busca:<br>
     <b>CATEGORIA: Todos os tipos</b> - Produtos marcados pelo fabricante como adequados para "todos os tipos de pele".<br>
     <b>APENAS: [tipo]</b> - Produtos que atendem SOMENTE aquele tipo específico (ex: apenas para pele seca).<br>
@@ -405,7 +392,7 @@ else:
             # 1. Se o produto tem 'todos os tipos' e só isso, entra APENAS
             if bases == {"todos os tipos"}:
                 buckets.append("APENAS: todos os tipos")
-                return buckets  # <-- sai daqui pra não duplicar na categoria
+                return buckets
 
             # 2. Se contém 'todos os tipos' junto de outros, entra na categoria
             if "todos os tipos" in bases:
@@ -427,7 +414,6 @@ else:
                     buckets.append(f"CONTÉM: {tipo}")
 
             return buckets
-
 
         bucket_rows = []
         for _, row in by_prod.iterrows():
@@ -451,38 +437,40 @@ else:
             for tipo in sel_types:
                 bucket_order.append(f"CONTÉM: {tipo}")
 
+            # -------- RENDER PADRONIZADO: brand-caption + tabela .details-table --------
             for marca in sel_brands:
                 sub = by_prod_exploded[by_prod_exploded["marca"] == marca]
                 if sub.empty:
                     continue
                 
-                st.markdown(f"<div class='brand-header'>{marca}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='brand-caption'>{marca}</div>", unsafe_allow_html=True)
                 
                 for bucket in bucket_order:
                     tb = sub[sub["bucket"] == bucket].copy()
                     if tb.empty:
                         continue
-                    
-                    st.markdown(f"<div class='bucket-title'>{bucket}</div>", unsafe_allow_html=True)
-                    
+
+                    # subtítulo discreto do bucket
+                    st.markdown(f"<span class='bucket-caption'>{bucket}</span>", unsafe_allow_html=True)
+
                     tb["Preço"] = tb["preco"].apply(fmt_price)
                     tb["Quantidade"] = tb.apply(lambda r: fmt_qtd(r["quantidade_valor"], r["quantidade_unidade"]), axis=1)
-                    
-                    display_tb = tb[["nome","categoria","Quantidade","Preço","beneficios","ingredientes"]].rename(columns={
-                        "nome": "Produto",
-                        "categoria": "Categoria",
-                        "beneficios": "Benefícios",
-                        "ingredientes": "Ingredientes"
-                    }).fillna("—").drop_duplicates()
-                    
-                    st.dataframe(display_tb, width="stretch", hide_index=True)
+
+                    display_tb = (
+                        tb[["nome","categoria","Quantidade","Preço","beneficios","ingredientes"]]
+                        .rename(columns={"nome":"Produto","categoria":"Categoria","beneficios":"Benefícios","ingredientes":"Ingredientes"})
+                        .fillna("—")
+                        .drop_duplicates()
+                    )
+
+                    # mesma tabela HTML da outra tela
+                    render_details_table(display_tb)
 
             st.markdown("---")
             st.markdown("### Visualizações resumidas da sua seleção")
             st.markdown("""
                 <div class='mode-description'>
-                <b>O que você vê aqui?</b><br>
-                • <b>Por marca × bucket</b>: quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).<br>
+                Quantos produtos de cada marca caíram em cada grupo mostrado nas tabelas (empilhado ou agrupado).<br>
                 </div>
             """, unsafe_allow_html=True)
 

@@ -11,7 +11,7 @@ import re
 from typing import Optional, List, Tuple
 
 ROOT = pathlib.Path(__file__).resolve().parent
-MODELS_DIR = pathlib.Path("/home/usuario/Área de trabalho/CEFET/Dados/models")
+MODELS_DIR = ROOT / "models"
 
 for path in [ROOT, MODELS_DIR]:
     if str(path) not in sys.path:

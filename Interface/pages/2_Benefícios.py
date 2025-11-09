@@ -192,7 +192,7 @@ st.markdown(f"<div class='subtle' style='margin:.5rem 0 .75rem 0;'>{TAGLINE_TEXT
 
 st.markdown("""
 <div class="note-box">
-<b>Como usar:</b> Escolha uma marca e, opcionalmente, uma categoria. O benefício mais usado considera <i>todos</i> os produtos da marca.
+Escolha uma marca e, opcionalmente, uma categoria. O benefício mais usado considera <i>todos</i> os produtos da marca.
 O benefício exclusivo compara com as demais marcas do dataset.
 </div>
 """, unsafe_allow_html=True)
@@ -461,7 +461,7 @@ st.markdown("---")
 st.markdown(f"<div class='section-title'>Encontre produtos por benefícios</div>", unsafe_allow_html=True)
 st.markdown("""
 <div class="note-box">
-    <b>Neste modo:</b> Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais tipos de pele e, opcionalmente, uma categoria.<br>
+    Selecione uma ou mais marcas (ou deixe todas), escolha um ou mais tipos de pele e, opcionalmente, uma categoria.<br>
     Os produtos são organizados em grupos para facilitar a busca:<br>
     <b>CATEGORIA: Todos os tipos</b> - Produtos marcados pelo fabricante como adequados para "todos os tipos de pele".<br>
     <b>APENAS: [tipo]</b> - Produtos que atendem SOMENTE aquele tipo específico (ex: apenas para pele seca).<br>
