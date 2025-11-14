@@ -30,7 +30,6 @@ DADOS/
 ├── Arquivo/                        # CSVs de cada marca
 ├── marcas/                         # Dados das marcas
 │   ├── Beyoung/
-│   │   ├── images/                 # Imagens baixadas
 │   │   ├── Beyoung_products.csv    # CSV padronizado
 │   │   ├── Beyoung_products.json   # JSON original 
 │   │   └── main.ipynb              # Web scraping
@@ -176,8 +175,8 @@ cd Interface
 streamlit run Principal.py
 ```
 
-### O dashboard abrirá automaticamente em `http://localhost:8501`
----
+O dashboard abrirá automaticamente em http://localhost:8501
+
 
 ## 📬 Contato
 
