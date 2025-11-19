@@ -483,7 +483,7 @@ else:
             agg_bucket["bucket"] = pd.Categorical(agg_bucket["bucket"], categories=bucket_order, ordered=True)
             agg_bucket = agg_bucket.sort_values(["bucket","marca"])
 
-            bar_mode = st.radio("Modo", ["Empilhado", "Agrupado"], horizontal=True, key="g_sum_mode")
+            bar_mode = st.radio("Modo de Exibição do Gráfico", ["Empilhado", "Agrupado"], horizontal=True, key="g_sum_mode")
             barmode = "stack" if bar_mode == "Empilhado" else "group"
 
             fig_sum = px.bar(

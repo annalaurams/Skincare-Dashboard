@@ -271,7 +271,7 @@ st.markdown(f"<div class='section-title'>Distribuição de Benefícios (paginada
 st.markdown("""
 <div class="note-box">
 Este gráfico mostra a quantidade de produtos por benefício (e a porcentagem relativa ao total da seleção). <br>
-Use os botões <b>Página Anterior</b> e <b>Próxima Página</b> para navegar e ajuste "Itens por página".
+Use os botões Página Anterior e Próxima Página para navegar e ajuste "Itens por página".
 </div>
 """, unsafe_allow_html=True)
 
@@ -593,7 +593,7 @@ else:
             st.markdown("### Visualizações resumidas da sua seleção")
             st.markdown("""
                 <div class="note-box">
-                <b>Por marca × bucket:</b> quantidade de produtos por grupo.
+                Quantidade de produtos por grupo (de acordo com os filtros):
                 </div>
             """, unsafe_allow_html=True)
 

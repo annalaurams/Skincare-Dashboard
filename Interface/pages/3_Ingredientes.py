@@ -592,7 +592,8 @@ else:
             st.markdown("### Visualizações resumidas da sua seleção")
             st.markdown("""
                 <div class="note-box">
-                <b>Por marca × bucket:</b> quantidade de produtos por grupo.
+                Quantidade de produtos por grupo (de acordo com os filtros)
+
                 </div>
             """, unsafe_allow_html=True)
 

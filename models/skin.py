@@ -70,23 +70,6 @@ SKIN_TYPE_SYNONYMS_PT = {
         "rubor facial", "pele que cora facilmente", "pele vascular"
     ],
 
-    "reativa": [
-        "reativa", "pele reativa", "cútis reativa", "responde mal a produtos",
-        "pele instável", "pele que reage", "alergia frequente", "intolerante a cosméticos", "alergica", "alergias"
-    ],
-
-    "com flacidez": [
-        "flacidez", "pele flácida", "sem firmeza", "pele caída",
-        "perda de tonicidade", "cútis flácida", "pele sem sustentação",
-        "envelhecimento com flacidez", "pele mole"
-    ],
-
-    "com celulite": [
-        "celulite", "estrias", "pele com celulite",
-        "ondulada", "pele com estrias", "marcas brancas", "marcas roxas",
-        "cútis com celulite"
-    ],
-
     "com olheiras": [
         "olheiras", "bolsas nos olhos", "inchaço ocular", "pele cansada",
         "olhos fundos", "manchas nos olhos", "pele sob os olhos escura",
@@ -98,25 +81,6 @@ SKIN_TYPE_SYNONYMS_PT = {
         "cútis com cicatrizes", "crateras",
         "sequelas de acne", "marcas pós-acne", "pele com textura irregular", "machucada"
     ],
-
-    "com espinhas ativas": [
-        "espinhas ativas", "acne inflamada", "lesões inflamadas",
-        "pústulas", "espinhas vermelhas", "acne ativa", "pele inflamada",
-        "cútis com acne ativa", "espinhas doloridas", "cravos inflamados"
-    ],
-
-    "radiante": [
-        "radiante", "brilhante (saudável)", "luminosa", "viçosa",
-        "pele glow", "pele iluminada", "aspecto saudável", "cútis radiante",
-        "pele com viço", "pele hidratada e brilhante"
-    ],
-
-    "opaca": [
-        "opaca", "sem viço", "sem brilho (doente)",
-        "pele sem vida", "cútis opaca", "sem luminosidade", "aspecto cinza",
-        "pele sem energia", "pele sem glow"
-    ],
-
     "todos os tipos": [
         "todos os tipos", "qualquer tipo de pele", "todas as peles",
         "independente do tipo", "todas", "universal", "para todas as peles",

@@ -137,7 +137,7 @@ def render_filters_por_marca(df: pd.DataFrame) -> Tuple[str, str]:
     st.markdown("<span class='filter-label'>Ordenar Por</span>", unsafe_allow_html=True)
     order_option = st.radio(
         label="Ordenar por",
-        options=["Quantidade (decrescente)", "Quantidade (crescente)", "Alfabética", "Ordem Canônica"],
+        options=["Quantidade (decrescente)", "Quantidade (crescente)", "Alfabética"],
         key="flt_ordem_marca",
         label_visibility="collapsed",
         horizontal=False,

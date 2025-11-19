@@ -236,7 +236,6 @@ def chart_categorias_por_marca(
         dist = dist.sort_values(["quantidade", "categoria"], ascending=[True, True]).reset_index(drop=True)
     elif order_option == "Alfabética":
         dist = dist.sort_values("categoria", ascending=True).reset_index(drop=True)
-    elif order_option == "Ordem Canônica" and CATEGORY_CANONICAL_ORDER:
 
         _CAT_ORDER_MAP = {c: i for i, c in enumerate(CATEGORY_CANONICAL_ORDER)}
         dist["cat_order"] = dist["categoria"].map(_CAT_ORDER_MAP).fillna(9999)
