@@ -1,4 +1,12 @@
 import streamlit as st
+
+# TEM que ser antes de qualquer outro st.*
+st.set_page_config(
+    page_title="Análise Cuidados com a Pele",
+    page_icon="🧴",
+    layout="wide"
+)
+
 from include import *  
 from ui_components.kpi_cards import render_kpis
 from ui_components.filters import (
@@ -11,7 +19,6 @@ from ui_components.charts import (
     chart_categorias_por_marca,
 )
 
-st.set_page_config(page_title="Análise Cuidados com a Pele", page_icon="🧴", layout="wide")
 
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"

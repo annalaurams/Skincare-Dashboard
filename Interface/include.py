@@ -2,7 +2,7 @@ from __future__ import annotations
 import sys
 import pathlib
 import pandas as pd
-import streamlit as st
+import streamlit as st          # <- pode ter streamlit aqui, sem problemas
 import plotly.express as px
 import numpy as np
 import plotly.graph_objects as go
@@ -40,14 +40,3 @@ BENEFIT_CANONICAL_ORDER = safe_import("benefits", "BENEFIT_CANONICAL_ORDER", [])
 CATEGORY_CANONICAL_ORDER = safe_import("category", "CATEGORY_CANONICAL_ORDER", [])
 SKIN_TYPE_SYNONYMS_PT = safe_import("skin", "SKIN_TYPE_SYNONYMS_PT", {})
 SKIN_TYPE_CANONICAL_ORDER = safe_import("skin", "SKIN_TYPE_CANONICAL_ORDER", [])
-
-st.set_page_config(
-    page_title="Análise Cuidados com a Pele",
-    page_icon="🧴",
-    layout="wide",
-)
-
-try:
-    apply_base_theme()
-except Exception:
-    pass
