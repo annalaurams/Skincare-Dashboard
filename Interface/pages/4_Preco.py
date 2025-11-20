@@ -1,5 +1,6 @@
 from __future__ import annotations
 from include import * 
+from core.data import load_data  # garante o mesmo loader do resto do app
 
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
@@ -91,101 +92,50 @@ def to_mls(val, unit, cat):
         return float(val) / d if d > 0 else np.nan
     return np.nan
 
-# LOADER DOS CSVs (PASTA DAS MARCAS)
-DATA_DIR = Path("/home/usuario/Área de trabalho/CEFET/Dados/Arquivo")
+# =============================
+# DADOS – usa o mesmo loader do app
+# =============================
 
-@st.cache_data(show_spinner=True)
-def load_brand_csvs(data_dir: Path = DATA_DIR) -> pd.DataFrame:
-    frames = []
-    for csv in sorted(data_dir.glob("*.csv")):
-        try:
-            df = pd.read_csv(csv)
-        except Exception:
-            df = pd.read_csv(csv, sep=";")
-        df.columns = [c.strip().lower() for c in df.columns]
-        df["_source_file"] = csv.stem
+df_all = load_data().copy()
 
-        rename_map = {
-            "produto": "nome", "nome_produto": "nome", "nome do produto": "nome",
-            "marcas": "marca", "marca_nome": "marca",
-            "categoria_nome": "categoria", "categorias": "categoria",
-            "tipo de pele": "tipo_pele", "tipos_de_pele": "tipo_pele", "tipo-de-pele": "tipo_pele",
-            "benefício": "beneficios", "benefícios": "beneficios", "beneficios_": "beneficios",
-            "ingrediente": "ingredientes",
-            "preço": "preco", "preço (r$)": "preco", "preco (r$)": "preco",
-            "quantidade": "quantidade_valor", "qtd": "quantidade_valor", "volume": "quantidade_valor",
-            "conteúdo": "quantidade_valor", "conteudo": "quantidade_valor",
-            "unidade": "quantidade_unidade", "un": "quantidade_unidade", "und": "quantidade_unidade",
-        }
-        df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns}, inplace=True)
-        frames.append(df)
+# garante colunas esperadas
+for col in ["nome", "marca", "categoria", "tipo_pele", "beneficios", "ingredientes", "preco",
+            "quantidade_valor", "quantidade_unidade"]:
+    if col not in df_all.columns:
+        df_all[col] = pd.NA
 
-    if not frames:
-        return pd.DataFrame(columns=[
-            "nome","marca","categoria","tipo_pele","beneficios","ingredientes","preco",
-            "quantidade_valor","quantidade_unidade","_source_file"
-        ])
+# se não tiver _source_file (marca vinda de CSV), usa a própria marca
+if "_source_file" not in df_all.columns:
+    df_all["_source_file"] = df_all["marca"].astype(str)
 
-    full = pd.concat(frames, ignore_index=True)
-    for col in ["nome","marca","categoria","tipo_pele","beneficios","ingredientes","preco","quantidade_valor","quantidade_unidade","_source_file"]:
-        if col not in full.columns:
-            full[col] = pd.NA
-
-    full["__file_brand__"] = full["_source_file"].map(_pretty_from_source)
-    full["marca"] = full["marca"].fillna(full["__file_brand__"]).astype(str)
-
-    for c in ["nome","marca","categoria","tipo_pele","beneficios","ingredientes"]:
-        full[c] = full[c].astype(str).str.strip()
-
-    # --------- PARSE DE PREÇO ----------
-    money_re = re.compile(r"(\d{1,3}(?:\.\d{3})*|\d+)(?:,(\d{1,2}))?$")
-    def parse_money_to_float(x) -> Optional[float]:
-        if x is None or (isinstance(x, float) and pd.isna(x)): 
-            return None
-        s = str(x).strip()
-        s = s.replace("R$", "").replace(" ", "")
-        if re.fullmatch(r"\d+(?:\.\d+)?", s):
-            try: return float(s)
-            except: return None
-        s = s.replace(".", "#").replace(",", ".").replace("#", "")
-        try:
-            return float(s)
-        except Exception:
-            m = money_re.search(str(x).strip().replace("R$","").replace(" ",""))
-            if not m: return None
-            inteiro = m.group(1).replace(".", "")
-            frac = m.group(2) or "00"
-            return float(f"{inteiro}.{frac}")
-
-    full["preco"] = full["preco"].apply(parse_money_to_float)
-    return full
-
-# DADOS
-df_all = load_brand_csvs()
-df_all["q_g"]  = df_all.apply(lambda r: to_grams(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
-df_all["q_ml"] = df_all.apply(lambda r: to_mls(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
-
-uses_files = "_source_file" in df_all.columns and df_all["_source_file"].notna().any()
-if uses_files:
-    files = sorted(df_all["_source_file"].dropna().unique().tolist())
-    LABEL_MAP = { _pretty_from_source(f): f for f in files }
-    BRAND_LABELS = list(LABEL_MAP.keys())
-    df_all["__brand_label__"] = df_all["_source_file"].map(lambda f: _pretty_from_source(f))
-    BRAND_COL = "__brand_label__"
-else:
-    LABEL_MAP = {}
-    BRAND_LABELS = sorted(df_all["marca"].dropna().unique().tolist())
-    df_all["__brand_label__"] = df_all["marca"]
-    BRAND_COL = "__brand_label__"
+df_all["__brand_label__"] = df_all["_source_file"].map(_pretty_from_source)
+BRAND_COL = "__brand_label__"
+BRAND_LABELS = sorted(df_all[BRAND_COL].dropna().unique().tolist())
 
 CAT_LIST = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else \
            sorted(df_all["categoria"].dropna().unique().tolist())
 
-def explode_dimension(df_in: pd.DataFrame, col: str, target_name: str,
-                      whitelist: Optional[List[str]] = None,
-                      brand_col: str = BRAND_COL) -> pd.DataFrame:
+# normaliza textos
+for c in ["nome", "marca", "categoria", "tipo_pele", "beneficios", "ingredientes"]:
+    df_all[c] = df_all[c].astype(str).str.strip()
+
+# quantidades derivadas (se forem úteis em outros lugares)
+df_all["q_g"]  = df_all.apply(lambda r: to_grams(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
+df_all["q_ml"] = df_all.apply(lambda r: to_mls(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
+
+# ==========================
+# explode_dimension ROBUSTA
+# ==========================
+def explode_dimension(
+    df_in: pd.DataFrame,
+    col: str,
+    target_name: str,
+    whitelist: Optional[List[str]] = None,
+    brand_col: str = BRAND_COL
+) -> pd.DataFrame:
     rows = []
     allowed = set(whitelist) if whitelist else None
+
     for _, r in df_in.iterrows():
         items = split_semicolon(r.get(col, ""))
         for item in items:
@@ -204,7 +154,19 @@ def explode_dimension(df_in: pd.DataFrame, col: str, target_name: str,
                 "q_valor": r.get("quantidade_valor"),
                 "q_unid": r.get("quantidade_unidade"),
             })
-    return pd.DataFrame(rows)
+
+    df_out = pd.DataFrame(rows)
+
+    # garante as colunas mesmo se não houver linhas (evita KeyError)
+    if df_out.empty:
+        df_out = pd.DataFrame(columns=[
+            target_name,
+            "preco", "produto", "marca", brand_col,
+            "categoria", "beneficios", "ingredientes",
+            "tipo_pele", "q_valor", "q_unid"
+        ])
+
+    return df_out
 
 # HEADER
 st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
@@ -234,7 +196,6 @@ st.markdown(
 )
 
 # (estilos dos cards — mantidos)
-
 st.markdown(f"""
 <style>
 .cardgrid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 20px; margin-bottom: 20px; }}
@@ -478,7 +439,7 @@ else:
         fig_sc.update_yaxes(range=[0, 150])
         fig_sc.update_xaxes(tickvals=[5,10,15,20,25,30,40,50,200])
 
-        # >>> LEGENDA: horizontal, abaixo, com título maior e quebra automática em mais linhas
+        # LEGENDA HORIZONTAL ABAIXO
         fig_sc.update_layout(
             height=600,
             legend=dict(
@@ -488,14 +449,13 @@ else:
                 y=-0.20,
                 xanchor="center",
                 x=0.5,
-                bgcolor="rgba(0,0,0,0)",      # fundo transparente
-                bordercolor="rgba(0,0,0,0)",  # sem cor de borda
-                borderwidth=0,                # remove a borda
+                bgcolor="rgba(0,0,0,0)",
+                bordercolor="rgba(0,0,0,0)",
+                borderwidth=0,
                 itemwidth=120
             ),
             margin=dict(t=60, b=120, l=30, r=20)
         )
-
 
         style_axes(fig_sc, height=600)
         st.plotly_chart(fig_sc, use_container_width=True, config={'displayModeBar': False})
@@ -506,7 +466,6 @@ else:
             "</div>",
             unsafe_allow_html=True
         )
-
 
 # UTIL: agregação min/méd/máx
 def agg_min_med_max(df: pd.DataFrame, by: List[str]) -> pd.DataFrame:
@@ -621,7 +580,7 @@ if analysis_mode == "Fixar uma marca":
 
         st.markdown(
             "<div class='simple-note'>"
-            "<b>Nota:</b> Nesta seção, você pode seguir dois fluxos de análise..."
+            "<b>Nota:</b> Gráfico que evidencia os preços médio, mínimo e máximo dos produtos de acordo com os filtros escolhidos"
             "</div>",
             unsafe_allow_html=True
         )
@@ -642,9 +601,15 @@ else:
             base_B = df_all[df_all["categoria"] == label_B].copy()
         elif facet_B == "Ingrediente":
             exp_all = explode_dimension(df_all, "ingredientes", "ingrediente", whitelist=INGREDIENTES_VALIDOS)
-            values = INGREDIENTES_VALIDOS[:] if INGREDIENTES_VALIDOS else sorted(exp_all["ingrediente"].dropna().unique().tolist())
-            label_B = st.selectbox("Escolha o ingrediente", options=values, key="label_B_ing")
-            base_B = exp_all[exp_all["ingrediente"] == label_B].copy()
+            if exp_all.empty:
+                st.info("Sem dados de ingredientes para essa combinação.")
+                base_B = exp_all.iloc[0:0]
+            else:
+                values = INGREDIENTES_VALIDOS[:] if INGREDIENTES_VALIDOS else sorted(
+                    exp_all["ingrediente"].dropna().unique().tolist()
+                )
+                label_B = st.selectbox("Escolha o ingrediente", options=values, key="label_B_ing")
+                base_B = exp_all[exp_all["ingrediente"] == label_B].copy()
         elif facet_B == "Benefício":
             exp_all = explode_dimension(df_all, "beneficios", "beneficio", whitelist=BENEFIT_CANONICAL_ORDER)
             values = BENEFIT_CANONICAL_ORDER[:] if BENEFIT_CANONICAL_ORDER else sorted(exp_all["beneficio"].dropna().unique().tolist())
@@ -696,7 +661,7 @@ else:
         st.plotly_chart(figB, use_container_width=True, config={'displayModeBar': False})
 
         st.markdown(
-            f"<div class='simple-note'>Comparação por <b>{facet_B}</b>: {label_B}. A barra mostra o <b>médio</b> e os losangos, <b>mínimo</b> e <b>máximo</b>. O tooltip inclui o <b>N de produtos</b>. Preço fixo em 0–150.</div>",
+            f"<div class='simple-note'>Comparação por <b>{facet_B}</b>: {label_B}. <br> A barra mostra o <b>médio</b> e os losangos, <b>mínimo</b> e <b>máximo</b>. <br> O tooltip inclui o <b>N de produtos</b>. Preço fixo em 0–150.</div>",
             unsafe_allow_html=True
         )
 
