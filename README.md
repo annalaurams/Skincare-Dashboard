@@ -22,6 +22,8 @@ O projeto visa construir um pipeline utilizando técnicas de **Web Scraping** co
 - **Normalizar** informações (categorias, benefícios, ingredientes, tipos de pele, preço e quantidade) usando módulos próprios
 - **Visualizar** dashboard com filtros e rankings
 
+Toda estrutura do código permite reprodutibilidade, inclusive com a possibilidade de realizar alterações para todas as etapas de desenvolvimento, adaptando e melhorando a proposta.
+
 ---
 
 ## 📂 Estrutura do Projeto
@@ -125,7 +127,6 @@ creamy,Creme Retexturizador - Ácido Glicólico,Reduz poros e melhora a textura 
 | `beneficios` | string | Lista separada por `;` dos benefícios|
 | `ingredientes` | string | Lista separada por `;` dos ingredientes ativos | 
 | `tipo_pele` | string | Tipos de pele recomendados, separados por `;` | 
-| `imagem` | string | Nome do arquivo de imagem | 
 
 ---
 
@@ -177,6 +178,9 @@ streamlit run Principal.py
 
 O dashboard abrirá automaticamente em http://localhost:8501
 
+### 4.Streamlit Clound
+
+O dashboard no Streamlit Clound está acoplado ao código do GitHub e está disponível em: [https://share.streamlit.io/user/annalaurams](https://share.streamlit.io/user/annalaurams)
 
 ## 📬 Contato
 
