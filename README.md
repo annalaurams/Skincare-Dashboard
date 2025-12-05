@@ -2,8 +2,6 @@
 
 ## 📑 Sumário
 
-## Sumário
-
 1. [Visão Geral](#visão-geral)
 2. [Estrutura do Projeto](#estrutura-do-projeto)
 3. [Formatos de Dados](#formatos-de-dados)
@@ -27,7 +25,6 @@ O projeto visa utilizar técnicas de **Web Scraping** para:
 
 Toda estrutura do código permite realizar alterações para todas as etapas de desenvolvimento, adaptando e melhorando a proposta.
 
----
 
 ## Estrutura do Projeto
 ```
@@ -71,7 +68,6 @@ DADOS/
 └── README.md                       
 ```
 
----
 
 ## Formatos de Dados
 
@@ -132,7 +128,6 @@ creamy,Creme Retexturizador - Ácido Glicólico,Reduz poros e melhora a textura 
 | `ingredientes` | string | Lista separada por `;` dos ingredientes ativos | 
 | `tipo_pele` | string | Tipos de pele recomendados, separados por `;` | 
 
----
 
 ## Configuração e Execução
 
