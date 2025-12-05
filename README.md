@@ -16,20 +16,20 @@
 
 ## 🌟 Visão Geral
 
-O projeto visa construir um pipeline utilizando técnicas de **Web Scraping** completo para:
+O projeto visa utilizar técnicas de **Web Scraping** para:
 
 - **Extrair** dados de produtos de skincare de marcas brasileiras (Oceane, Sallve, Creamy, BeYoung, Ollie)
 - **Normalizar** informações (categorias, benefícios, ingredientes, tipos de pele, preço e quantidade) usando módulos próprios
-- **Visualizar** dashboard com filtros e rankings
+- **Visualizar** dashboard com filtros, tabelas e gráficos
 
-Toda estrutura do código permite reprodutibilidade, inclusive com a possibilidade de realizar alterações para todas as etapas de desenvolvimento, adaptando e melhorando a proposta.
+Toda estrutura do código permite realizar alterações para todas as etapas de desenvolvimento, adaptando e melhorando a proposta.
 
 ---
 
 ## 📂 Estrutura do Projeto
 ```
 DADOS/
-├── Arquivo/                        # CSVs de cada marca
+├── Arquivo/                        # CSVs de cada marca, usado no dashboard
 ├── marcas/                         # Dados das marcas
 │   ├── Beyoung/
 │   │   ├── Beyoung_products.csv    # CSV padronizado
@@ -50,13 +50,14 @@ DADOS/
 │   │   ├── data.py                 # Carregamento e validação
 │   │   └── utils.py                # Funções auxiliares
 │   ├── pages/                      # Páginas do dashboard
-│   │   ├── 1_Catálogo.py
+│   │   ├── 1_Beneficios.py
 │   │   ├── 2_Ingredientes.py
-│   │   ├── 3_Benefícios.py
+│   │   ├── 3_Preco.py
 │   │   └── 4_Tipos_de_Pele.py
 │   ├── ui_components/              # Componentes reutilizáveis
 │   │   ├── filters.py              
-│   │   └── cards.py                
+│   │   └── charts.py
+|   |   └── kpi_cards.py       
 │   ├── Principal.py                # Página inicial
 │   └── requirements.txt            # Dependências
 ├── models/                         # Regras de normalização de acordo com produtos
