@@ -1,0 +1,38 @@
+[
+  {
+    "marca": "oceane",
+    "nome": "Mini Geladeira Branca - Skincare Fridge 4l",
+    "subtitulo": null,
+    "categoria": "tônico",
+    "quantidade": "4l",
+    "preco": "599.90",
+    "beneficios": null,
+    "ingredientes": null,
+    "tipo_pele": null,
+    "imagem": "mini-geladeira-branca-skincare-fridge-4l.jpg"
+  },
+  {
+    "marca": "oceane",
+    "nome": "Mini Geladeira Preta - Skincare Fridge Océane Edition 4l",
+    "subtitulo": null,
+    "categoria": "tônico",
+    "quantidade": "4l",
+    "preco": "599.90",
+    "beneficios": "anti-inchaço nos olhos",
+    "ingredientes": null,
+    "tipo_pele": null,
+    "imagem": "mini-geladeira-preta-skincare-fridge-oceane-edition-4l.jpg"
+  },
+  {
+    "marca": "oceane",
+    "nome": "Máscara Facial de Argila com Centella Asiática - Cica Mask 35ml",
+    "subtitulo": null,
+    "categoria": "máscara facial",
+    "quantidade": "35ml",
+    "preco": "33.90",
+    "beneficios": "acalma/anti-vermelhidão; antiacne; colágeno; limpeza",
+    "ingredientes": null,
+    "tipo_pele": null,
+    "imagem": "mascara-facial-de-argila-com-centella-asiatica-cica-mask-35ml.jpg"
+  }
+]
