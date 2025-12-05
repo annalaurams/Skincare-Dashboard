@@ -1,20 +1,23 @@
-# Análise de Dados sobre Produtos de Cuidados Faciais: Um Estudo sobre as Tendências do Mercado Brasileiro
+# Mapeamento do Mercado Brasileiro de Cuidados Faciais: Estudo Comparativo na Identificação de Padrões, Tendências e Divergências de Produtos
 
 ## 📑 Sumário
 
-1. [🌟 Visão Geral](#-visão-geral)
-2. [📂 Estrutura do Projeto](#-estrutura-do-projeto)
-3. [📊 Formatos de Dados](#-formatos-de-dados)
+## Sumário
+
+1. [Visão Geral](#visão-geral)
+2. [Estrutura do Projeto](#estrutura-do-projeto)
+3. [Formatos de Dados](#formatos-de-dados)
    - [Exemplo CSV](#exemplo-csv)
    - [Exemplo JSON](#exemplo-json)
-   - [Descrição dos campos](#descrição-dos-campos)
-4. [⚙️ Configuração e Execução](#️-configuração-e-execução)
-   - [1. Preparar o Ambiente](#1-preparar-o-ambiente)
-   - [2. Gerar os Dados](#2-gerar-os-dados)
-   - [3. Rodar o Dashboard com Streamlit](#3-rodar-o-dashboard-com-streamlit)
-5. [📬 Contato](#-contato)
+   - [Descrição dos Campos](#descrição-dos-campos)
+4. [Configuração e Execução](#configuração-e-execução)
+   - [Preparar o Ambiente](#1-preparar-o-ambiente)
+   - [Gerar os Dados](#2-gerar-os-dados)
+   - [Rodar o Dashboard com Streamlit](#3-rodar-o-dashboard-com-streamlit)
+   - [Streamlit Cloud](#4-streamlit-cloud)
+5. [Contato](#contato)
 
-## 🌟 Visão Geral
+## Visão Geral
 
 O projeto visa utilizar técnicas de **Web Scraping** para:
 
@@ -26,7 +29,7 @@ Toda estrutura do código permite realizar alterações para todas as etapas de 
 
 ---
 
-## 📂 Estrutura do Projeto
+## Estrutura do Projeto
 ```
 DADOS/
 ├── Arquivo/                        # CSVs de cada marca, usado no dashboard
@@ -70,7 +73,7 @@ DADOS/
 
 ---
 
-## 📊 Formatos de Dados
+## Formatos de Dados
 
 Os dados são extraídos dos sites das marcas através de web scraping e alguns campos são preenchidos manualmente para garantir a padronização e preenhimento das informações.
 
@@ -131,7 +134,7 @@ creamy,Creme Retexturizador - Ácido Glicólico,Reduz poros e melhora a textura 
 
 ---
 
-## ⚙️ Configuração e Execução
+## Configuração e Execução
 
 ### 1. Preparar o Ambiente
 ```bash
@@ -181,9 +184,9 @@ O dashboard abrirá automaticamente em http://localhost:8501
 
 ### 4.Streamlit Clound
 
-O dashboard no Streamlit Clound está acoplado ao código do GitHub e está disponível em: [https://share.streamlit.io/user/annalaurams](https://share.streamlit.io/user/annalaurams)
+O dashboard no Streamlit Clound está acoplado ao código do GitHub e está disponível em: [https://dashboardskincare.streamlit.app/](https://dashboardskincare.streamlit.app/)
 
-## 📬 Contato
+## Contato
 
 **Anna Laura Moura**
 
