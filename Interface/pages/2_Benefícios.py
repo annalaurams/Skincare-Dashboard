@@ -45,7 +45,6 @@ st.markdown(f"""
 .section-title {{ font-size:{SECTION_TITLE_SIZE}px; font-weight:700; color:{text_color()}; margin: 1rem 0 .5rem 0; }}
 .subtle       {{ font-size:{TAGLINE_SIZE}px; color:{subtext_color()}; }}
 
-/* Altura e fonte dos selects/inputs */
 .stSelectbox div[role="combobox"],
 .stMultiSelect div[role="combobox"],
 .stTextInput input, .stTextInput textarea {{
@@ -102,7 +101,7 @@ div[data-testid="stWidgetLabel"] p {{ font-size: 20px !important; }}
     border-left: 5px solid {accent(0)};
 }}
 
-/* ====== TABELA NO MESMO ESTILO DA PÁGINA DE PREÇO & QUANTIDADE ====== */
+/* Tabela */
 .details-table {{ width: 100%; border-collapse: collapse; margin-top: 1.2rem;
   background: {panel_bg()}; border-radius: 18px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }}
 .details-table thead {{ background: linear-gradient(135deg, {accent(0)} 0%, {accent(1)} 100%); color: white; }}

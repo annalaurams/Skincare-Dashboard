@@ -1,6 +1,6 @@
 from __future__ import annotations
 from include import * 
-from core.data import load_data  # garante o mesmo loader do resto do app
+from core.data import load_data  
 
 if "palette_name" not in st.session_state:
     st.session_state["palette_name"] = "Solaris"
@@ -16,7 +16,7 @@ def subtext_color(): return "#555"
 def panel_bg(): return "#ffffff"
 
 TITLE_TEXT   = "Panorama de Preços"
-TAGLINE_TEXT = "Veja preços, tamanhos (g/mL) e variações por marca, categoria, ingredientes, benefícios e tipos de pele."
+TAGLINE_TEXT = "Veja preços, variações por marca, categoria, ingredientes, benefícios e tipos de pele."
 TITLE_SIZE, TAGLINE_SIZE = 60, 24
 AXIS_TITLE_SIZE, AXIS_TICK_SIZE = 22, 22
 LEGEND_FONT_SIZE = 26
@@ -63,34 +63,29 @@ def order_by_canonical(series: pd.Series, canonical: List[str]) -> List[str]:
             ordered.append(x)
     return ordered
 
-#  Conversão g ↔ mL (heurística por categoria) 
-DENSIDADE = {
-    "sérum": 0.95, "serum": 0.95, "hidratante": 1.05, "creme": 1.10,
-    "manteiga": 1.15, "óleo": 0.90, "oleo": 0.90, "gel": 1.02,
-    "_default": 1.00
-}
-def _dens_from_cat(cat: str) -> float:
-    t = (cat or "").lower()
-    for k, v in DENSIDADE.items():
-        if k != "_default" and k in t:
-            return v
-    return DENSIDADE["_default"]
-
-def to_grams(val, unit, cat):
-    if pd.isna(val): return np.nan
-    u = (str(unit) if unit is not None else "").strip().lower()
-    if u in ["g", "grama", "gramas"]: return float(val)
-    if u in ["ml", "mililitro", "mililitros"]: return float(val) * _dens_from_cat(cat)
-    return np.nan
-
-def to_mls(val, unit, cat):
-    if pd.isna(val): return np.nan
-    u = (str(unit) if unit is not None else "").strip().lower()
-    if u in ["ml", "mililitro", "mililitros"]: return float(val)
-    if u in ["g", "grama", "gramas"]:
-        d = _dens_from_cat(cat)
-        return float(val) / d if d > 0 else np.nan
-    return np.nan
+def format_quantidade(valor, unidade):
+    """Formata a quantidade de forma legível"""
+    if pd.isna(valor) and pd.isna(unidade):
+        return "—"
+    
+    valor_str = ""
+    if not pd.isna(valor):
+        try:
+            v = float(valor)
+            valor_str = f"{int(v)}" if v.is_integer() else f"{v:.2f}"
+        except:
+            valor_str = str(valor)
+    
+    unidade_str = str(unidade) if not pd.isna(unidade) else ""
+    
+    if valor_str and unidade_str:
+        return f"{valor_str} {unidade_str}"
+    elif valor_str:
+        return valor_str
+    elif unidade_str:
+        return unidade_str
+    else:
+        return "—"
 
 # =============================
 # DADOS – usa o mesmo loader do app
@@ -119,9 +114,11 @@ CAT_LIST = CATEGORY_CANONICAL_ORDER[:] if CATEGORY_CANONICAL_ORDER else \
 for c in ["nome", "marca", "categoria", "tipo_pele", "beneficios", "ingredientes"]:
     df_all[c] = df_all[c].astype(str).str.strip()
 
-# quantidades derivadas (se forem úteis em outros lugares)
-df_all["q_g"]  = df_all.apply(lambda r: to_grams(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
-df_all["q_ml"] = df_all.apply(lambda r: to_mls(r.get("quantidade_valor"), r.get("quantidade_unidade"), r.get("categoria")), axis=1)
+# Cria coluna formatada de quantidade para exibição
+df_all["quantidade_formatada"] = df_all.apply(
+    lambda r: format_quantidade(r.get("quantidade_valor"), r.get("quantidade_unidade")), 
+    axis=1
+)
 
 # ==========================
 # explode_dimension ROBUSTA
@@ -151,8 +148,7 @@ def explode_dimension(
                 "beneficios": r.get("beneficios"),
                 "ingredientes": r.get("ingredientes"),
                 "tipo_pele": r.get("tipo_pele"),
-                "q_valor": r.get("quantidade_valor"),
-                "q_unid": r.get("quantidade_unidade"),
+                "quantidade_formatada": r.get("quantidade_formatada"),
             })
 
     df_out = pd.DataFrame(rows)
@@ -163,7 +159,7 @@ def explode_dimension(
             target_name,
             "preco", "produto", "marca", brand_col,
             "categoria", "beneficios", "ingredientes",
-            "tipo_pele", "q_valor", "q_unid"
+            "tipo_pele", "quantidade_formatada"
         ])
 
     return df_out
@@ -172,7 +168,7 @@ def explode_dimension(
 st.markdown(f"<h1 style='margin:0; font-size:{TITLE_SIZE}px; color:{accent(0)}'>{TITLE_TEXT}</h1>", unsafe_allow_html=True)
 st.markdown(f"<div style='margin:.25rem 0 1rem 0; color:{subtext_color()}; font-size:{TAGLINE_SIZE}px'>{TAGLINE_TEXT}</div>", unsafe_allow_html=True)
 
-#  NOTA SIMPLES 
+# 📝 NOTA SIMPLES 
 st.markdown("""
 <style>
 .simple-note {
@@ -190,7 +186,7 @@ st.markdown(
     "Este painel consolida dados coletados nos sites oficiais das marcas brasileiras analisadas."
     "<br>Selecione <b>uma marca</b> e, opcionalmente, <b>uma categoria</b> para filtrar os resultados."
     "<br>Com esses filtros, você verá os <b>KPIs</b>: total de produtos da seleção, <b>marca</b>, <b>preço médio</b>, <b>mínimo</b> e <b>máximo</b>."
-    "<br>Também exibimos os <b> 3 produtos mais caros</b> e os <b> 3 mais baratos</b> com base nos filtros aplicados."
+    "<br>Também exibimos os <b>3 produtos mais caros</b> e os <b>3 mais baratos</b> com base nos filtros aplicados."
     "</div>",
     unsafe_allow_html=True
 )
@@ -262,20 +258,11 @@ with k4: kpi_box("Preço máximo", brl(preco_max), 3)
 # CARDS: TOP 3 CAROS/BARATOS
 st.markdown(f"<div style='font-size:32px; font-weight:800; color:{accent(1)}; margin:2rem 0 1rem 0;'>Produtos mais caros e mais baratos</div>", unsafe_allow_html=True)
 
-def _fmt_qtd(v,u):
-    if pd.isna(v): return "—"
-    try:
-        v = float(v)
-        vtxt = f"{int(v)}" if v.is_integer() else f"{v:.2f}"
-    except Exception:
-        vtxt = str(v)
-    return f"{vtxt} {u}" if isinstance(u,str) and u else vtxt
-
 def _render_card(prod, tipo):
     nome = prod.get("nome","—")
     cat  = prod.get("categoria","—")
     preco = brl(prod.get("preco"))
-    qtd = _fmt_qtd(prod.get("quantidade_valor"), prod.get("quantidade_unidade"))
+    qtd = prod.get("quantidade_formatada", "—")
     badge_class = "caro" if tipo=="Mais caro" else "barato"
     badge_text  = "Mais caro" if tipo=="Mais caro" else "Mais barato"
     return f"""
@@ -320,152 +307,77 @@ with right:
 
 st.markdown("---")
 
-# Preço × Quantidade (marca selecionada)
 st.markdown(
-    f"<div style='font-size:32px; font-weight:800; color:{accent(2)}; margin:2rem 0 1rem 0;'>Relação Preço × Quantidade</div>",
-    unsafe_allow_html=True
-)
-st.markdown(
-    f"<div class='sectioncap'>Apenas produtos da marca selecionada: {sel_brand_label}</div>",
+    f"<div style='font-size:32px; font-weight:800; color:{accent(2)}; margin:2rem 0 1rem 0;'>Padrões de Quantidade</div>",
     unsafe_allow_html=True
 )
 
-import re as _re
-df_sc_base = df_all[df_all[BRAND_COL] == sel_brand_label].copy()
-if df_sc_base.empty:
-    st.info("Sem dados para a marca selecionada.")
-else:
-    has_q_single = "quantidade" in df_sc_base.columns
+st.markdown(
+    "<div class='simple-note'>"
+    "<b>Nota:</b> A análise da quantidade dos produtos é apresentada de forma descritiva, "
+    "sem conversões entre unidades de massa (g) e volume (mL)."
+    "</div>",
+    unsafe_allow_html=True
+)
 
-    def _extract_num_and_unit_from_single(q):
-        if q is None or (isinstance(q, float) and pd.isna(q)): return (np.nan, None)
-        s = str(q).strip().lower()
-        s = s.replace("mililitros", "ml").replace("mililitro", "ml")
-        s = s.replace("gramas", "g").replace("grama", "g")
-        s = s.replace("litros", "l").replace("litro", "l")
-        s = s.replace("quilo", "kg").replace("quilos", "kg")
-        mnum = _re.search(r"(\d+(?:[.,]\d+)?)", s)
-        num = np.nan
-        if mnum:
-            num_txt = mnum.group(1).replace(".", "#").replace(",", ".").replace("#", "")
-            try: num = float(num_txt)
-            except Exception: num = np.nan
-        unit = None
-        if "kg" in s: unit = "kg"
-        elif "ml" in s: unit = "ml"
-        elif _re.search(r"\bl\b", s): unit = "l"
-        elif _re.search(r"\bg\b", s): unit = "g"
-        if unit == "kg": num = num * 1000 if not pd.isna(num) else np.nan; unit = "g"
-        if unit == "l":  num = num * 1000 if not pd.isna(num) else np.nan; unit = "ml"
-        return (num, unit)
+# Análise descritiva das quantidades
+df_qtd_analise = df_all[df_all[BRAND_COL] == sel_brand_label].copy()
+if sel_cat != "(todas)":
+    df_qtd_analise = df_qtd_analise[df_qtd_analise["categoria"] == sel_cat]
 
-    def _extract_num_and_unit_from_split(q_val, q_unit):
-        if q_val is None and q_unit is None:
-            return (np.nan, None)
-        return _extract_num_and_unit_from_single(f"{'' if pd.isna(q_val) else q_val} {'' if pd.isna(q_unit) else q_unit}".strip())
+# Conta distribuição de unidades
+df_qtd_validas = df_qtd_analise[df_qtd_analise["quantidade_unidade"].notna()].copy()
 
-    def _to_g(num, unit, cat):
-        if pd.isna(num) or unit is None: return np.nan
-        if unit == "g":  return num
-        if unit == "ml": return num * _dens_from_cat(cat)
-        return np.nan
-
-    def _to_ml(num, unit, cat):
-        if pd.isna(num) or unit is None: return np.nan
-        if unit == "ml": return num
-        if unit == "g":
-            d = _dens_from_cat(cat);  return (num / d) if d and d > 0 else np.nan
-        return np.nan
-
-    if has_q_single:
-        pairs = df_sc_base["quantidade"].apply(_extract_num_and_unit_from_single)
-    else:
-        pairs = df_sc_base.apply(lambda r: _extract_num_and_unit_from_split(r.get("quantidade_valor"), r.get("quantidade_unidade")), axis=1)
-    df_sc_base[["q_num_raw","q_unit_norm"]] = pd.DataFrame(pairs.tolist(), index=df_sc_base.index)
-
-    df_sc_base["categoria"] = df_sc_base["categoria"].astype(str).str.strip()
-    df_sc_base["q_g_calc"]  = df_sc_base.apply(lambda r: _to_g(r["q_num_raw"],  r["q_unit_norm"], r["categoria"]), axis=1)
-    df_sc_base["q_ml_calc"] = df_sc_base.apply(lambda r: _to_ml(r["q_num_raw"], r["q_unit_norm"], r["categoria"]), axis=1)
-
-    cpx1, _cpx2 = st.columns([1,1])
-    with cpx1:
-        unidade_plot = st.radio("Unidade para visualização", ["g", "mL", "Original"], horizontal=True, key="unid_pxq_fix_csv")
-
-    if unidade_plot == "g":
-        col_q = "q_g_calc"; qtd_label = "Quantidade (g)"
-    elif unidade_plot == "mL":
-        col_q = "q_ml_calc"; qtd_label = "Quantidade (mL)"
-    else:
-        col_q = "q_num_raw"; qtd_label = "Quantidade (original)"
-
-    df_sc = df_sc_base.dropna(subset=[col_q, "preco"]).copy()
-    df_sc["qtd_plot"] = pd.to_numeric(df_sc[col_q], errors="coerce")
-
-    if df_sc["qtd_plot"].notna().sum() == 0:
-        tot = len(df_sc_base)
-        ok_g  = df_sc_base["q_g_calc"].notna().sum()
-        ok_ml = df_sc_base["q_ml_calc"].notna().sum()
-        st.error(
-            "Sem dados suficientes para exibir a dispersão nesta unidade.\n\n"
-            f"- Total na marca: **{tot}**\n"
-            f"- Quantidade não-nula (g): **{ok_g}** | (mL): **{ok_ml}**\n"
-            "Esse bloco reconhece valores como '30ml', '40 g', '0,5 L', '200 mL'."
-        )
-    else:
-        df_sc["preco_fmt"]      = df_sc["preco"].map(brl)
-        df_sc["qtd_plot_fmt"]   = df_sc["qtd_plot"].map(lambda x: f"{x:.2f}" if pd.notna(x) else "—")
-        df_sc["qtd_fmt_origem"] = df_sc.apply(
-            lambda r: (str(r.get("quantidade")) if has_q_single else f"{'' if pd.isna(r.get('quantidade_valor')) else r.get('quantidade_valor')} {'' if pd.isna(r.get('quantidade_unidade')) else r.get('quantidade_unidade')}".strip()) or "—",
-            axis=1
-        )
-
-        # scatter com custom_data e LEGENDA HORIZONTAL ABAIXO
-        fig_sc = px.scatter(
-            df_sc,
-            x="qtd_plot",
-            y="preco",
-            color="categoria",
-            color_discrete_sequence=SEQ,
-            labels={"qtd_plot": qtd_label, "preco": "Preço (R$)", "categoria":"Categoria"},
-            hover_data={},
-            custom_data=["nome", "preco_fmt", "qtd_fmt_origem", "qtd_plot_fmt", "categoria"]
-        )
-        fig_sc.update_traces(
-            marker=dict(size=SCATTER_MARKER_SIZE, line=dict(width=0)),
-            hovertemplate="<b>%{customdata[0]}</b><br>Preço: %{customdata[1]}<br>Qtd (origem): %{customdata[2]}<br>Qtd (plot): %{customdata[3]}<br>Categoria: %{customdata[4]}<extra></extra>"
-        )
-
-        # eixo e ticks
-        fig_sc.update_yaxes(range=[0, 150])
-        fig_sc.update_xaxes(tickvals=[5,10,15,20,25,30,40,50,200])
-
-        # LEGENDA HORIZONTAL ABAIXO
-        fig_sc.update_layout(
-            height=600,
-            legend=dict(
-                orientation="h",
-                title=dict(text="Categoria", font=dict(size=28)),
-                yanchor="top",
-                y=-0.20,
-                xanchor="center",
-                x=0.5,
-                bgcolor="rgba(0,0,0,0)",
-                bordercolor="rgba(0,0,0,0)",
-                borderwidth=0,
-                itemwidth=120
-            ),
-            margin=dict(t=60, b=120, l=30, r=20)
-        )
-
-        style_axes(fig_sc, height=600)
-        st.plotly_chart(fig_sc, use_container_width=True, config={'displayModeBar': False})
-
+if not df_qtd_validas.empty:
+    col_stat1, col_stat2, col_stat3 = st.columns(3)
+    
+    # Unidades mais comuns
+    unidades_count = df_qtd_validas["quantidade_unidade"].value_counts()
+    
+    with col_stat1:
         st.markdown(
-            "<div class='simple-note'>"
-            "<b>Nota:</b> Cada ponto representa um produto da marca selecionada. Só a <b>quantidade</b> muda entre g/mL/Original; <b>o preço é sempre o original</b>."
-            "</div>",
+            f"""
+            <div class="kpi-box" style="border-color:{accent(0)}; background: linear-gradient(135deg, #ffffff 0%, {accent(0)}12 100%);">
+              <div class="kpi-title">Unidade mais comum</div>
+              <div class="kpi-value" style="color:{accent(0)}">{unidades_count.index[0] if len(unidades_count) > 0 else '—'}</div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
+    
+    with col_stat2:
+        produtos_com_qtd = len(df_qtd_validas)
+        total_produtos = len(df_qtd_analise)
+        percentual = (produtos_com_qtd / total_produtos * 100) if total_produtos > 0 else 0
+        
+        st.markdown(
+            f"""
+            <div class="kpi-box" style="border-color:{accent(1)}; background: linear-gradient(135deg, #ffffff 0%, {accent(1)}12 100%);">
+              <div class="kpi-title">Produtos com quantidade informada</div>
+              <div class="kpi-value" style="color:{accent(1)}">{produtos_com_qtd}/{total_produtos} ({percentual:.0f}%)</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    with col_stat3:
+        # Variedade de tamanhos
+        tamanhos_unicos = df_qtd_validas["quantidade_formatada"].nunique()
+        
+        st.markdown(
+            f"""
+            <div class="kpi-box" style="border-color:{accent(2)}; background: linear-gradient(135deg, #ffffff 0%, {accent(2)}12 100%);">
+              <div class="kpi-title">Variedade de tamanhos</div>
+              <div class="kpi-value" style="color:{accent(2)}">{tamanhos_unicos}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+else:
+    st.info("Não há informações de quantidade disponíveis para a seleção atual.")
+
+st.markdown("---")
 
 # UTIL: agregação min/méd/máx
 def agg_min_med_max(df: pd.DataFrame, by: List[str]) -> pd.DataFrame:
@@ -473,26 +385,42 @@ def agg_min_med_max(df: pd.DataFrame, by: List[str]) -> pd.DataFrame:
     g.rename(columns={"min":"preco_min","mean":"preco_med","max":"preco_max","count":"n_produtos"}, inplace=True)
     return g
 
-#  tabela com subtítulo por marca 
+# 📋 tabela com subtítulo por marca 
 def render_details_table_products_grouped_by_brand(df: pd.DataFrame, extra_cols: List[str], brand_col: str = BRAND_COL):
-    base_cols = ["nome","categoria","preco"]
+    base_cols = ["nome","categoria","quantidade_formatada","preco"]
     all_cols = [c for c in (base_cols + extra_cols) if c in df.columns]
+    
     for brand, sub in df.sort_values([brand_col, "categoria","nome"]).groupby(brand_col):
         st.markdown(f"<div class='brand-caption'>{brand}</div>", unsafe_allow_html=True)
         show = sub[all_cols].copy()
-        headers_map = {"nome":"Produto","categoria":"Categoria","preco":"Preço","ingredientes":"Ingredientes","beneficios":"Benefícios","tipo_pele":"Tipos de pele"}
+        
+        headers_map = {
+            "nome":"Produto",
+            "categoria":"Categoria",
+            "quantidade_formatada":"Quantidade",
+            "preco":"Preço",
+            "ingredientes":"Ingredientes",
+            "beneficios":"Benefícios",
+            "tipo_pele":"Tipos de pele"
+        }
+        
         thead = "".join([f"<th>{headers_map.get(c, c.title())}</th>" for c in all_cols])
         rows_html = []
+        
         for _, r in show.iterrows():
             tds = []
             for c in all_cols:
                 v = r[c]
-                tds.append(f"<td>{brl(v) if c=='preco' else ('-' if pd.isna(v) else str(v))}</td>")
+                if c == "preco":
+                    tds.append(f"<td>{brl(v)}</td>")
+                else:
+                    tds.append(f"<td>{'-' if pd.isna(v) else str(v)}</td>")
             rows_html.append("<tr>" + "".join(tds) + "</tr>")
+        
         html = f"<table class='details-table'><thead><tr>{thead}</tr></thead><tbody>{''.join(rows_html)}</tbody></table>"
         st.markdown(html, unsafe_allow_html=True)
 
-#  Paginação 
+# 📄 Paginação 
 def paginate(df: pd.DataFrame, key_base: str, page_size: int) -> Tuple[pd.DataFrame, int, int]:
     total = len(df)
     idx_key = f"{key_base}_idx"

@@ -23,20 +23,17 @@ PALETTES = {
     },
 
     "Outono": {
-        "title_grad_from": "#F9A59A",   
-        "title_grad_to":   "#ADD5FA",
-        "card_from": "#FCE0C0",
-        "card_to":   "#C1EBE1",
-        "accent":    "#FA5F49",
+
+        "title_grad_from": "#5A5732",
+        "title_grad_to":   "#153B57",
+        "card_from": "#C08E45",
+        "card_to":   "#E5C89C",
+        "accent": "#B02035",
         "seq": [
-            "#FFE2B5", "#FFD2A5", "#F9D99A", "#FBC2A7", "#F9A59A", "#F6B6B6",
-            "#F8C9C4", "#FFB8A8", "#FF9999",
-            "#C1EBE1", "#B3E3DA", "#A1D9D1", "#90B9A9", "#7CCAC2",
-            "#E6F2FF", "#D7E6F9", "#C9D6F4", "#B7C7F0", "#ADD5FA", "#95B8F6",
-            "#DCCFF5", "#E9DDF9",
-            "#F7FFF7", "#F2EFEA", "#EAE3D9", "#E3D4CE", "#D9C4C2",
-            "#CAB5B2", "#BCA9A7"
-        ],
+            "#5A5732", "#494E16", "#2E4E24", "#A5A846", "#948A57", "#687A60", "#1B2237", "#002A3B", "#2A7B7A",
+            "#A94F1B", "#D15823", "#C2892C", "#D19A1A", "#B8830F", "#572A1C", "#584124", "#A68148", "#CFBC8D",
+            "#702346", "#482032", "#8C6D60", "#D58E78", "#E56E83", "#A1082F", "#5C0A1B", "#B03B46", "#E6333A"
+        ]
     },
 
     "Algodão-Doce": {
