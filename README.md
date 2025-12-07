@@ -135,12 +135,18 @@ creamy,Creme Retexturizador - Ácido Glicólico,Reduz poros e melhora a textura 
 ```bash
 python -m pip install --upgrade pip
 
-pip install requests beautifulsoup4 pandas numpy streamlit altair plotly pillow
+pip install requests beautifulsoup4 lxml urllib3 pillow
 
 pip install selenium webdriver-manager undetected-chromedriver
 
-pip install jupyter
+pip install pandas numpy unidecode
+
+pip install streamlit altair plotly
+
+pip install jupyter ipykernel
 ```
+
+Confira também o arquivo `requirements.txt` para ver todas as dependências utilizadas no projeto.
 
 ### 2. Gerar os Dados
 
@@ -183,9 +189,9 @@ O dashboard no Streamlit Clound está acoplado ao código do GitHub e está disp
 
 ## Contato
 
-**Anna Laura Moura**
+**Anna Laura Moura Santana**
 
-Estudante de Ciência da Dados | CEFET-MG
+Ciência da Dados | CEFET-MG
 
 [![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:nalauramoura@gmail.com)
 [![LinkedIn](https://img.shields.io/badge/-LinkedIn-%230077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/annalaurams)
