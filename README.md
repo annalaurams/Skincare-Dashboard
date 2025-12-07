@@ -1,4 +1,4 @@
-# Mapeamento do Mercado Brasileiro de Cuidados Faciais: Estudo Comparativo na Identificação de Padrões, Tendências e Divergências de Produtos
+# Mapeamento do Mercado Brasileiro de Cuidados Faciais: Estudo Comparativo na Identificação de Padrões Divergências de Produtos
 
 ## 📑 Sumário
 
